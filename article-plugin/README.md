@@ -2,6 +2,54 @@
 
 技术调研文章多维度审查与增强插件。通过 8 个专业 Agent 协同工作，对技术文章进行事实校验、深度分析、逻辑审查、去 AI 味、术语规范化等多维度增强。
 
+## 安装
+
+### 1. 克隆仓库
+
+```bash
+git clone <repo-url>
+cd artist
+```
+
+### 2. 安装为 Claude Code 插件
+
+```bash
+# 从 article-plugin 目录安装（路径指向包含 .claude-plugin/plugin.json 的目录）
+claude plugins install ./article-plugin
+
+# 验证安装
+claude plugins list
+```
+
+安装成功后会显示 `article@article` 状态为 enabled。
+
+### 3. 安装依赖（按需）
+
+```bash
+# PDF 处理（如果需要处理 PDF 输入）
+pip install pypdf
+
+# Mermaid 图表渲染（如果需要生成流程图/架构图）
+npm install -g @mermaid-js/mermaid-cli
+
+# Codex CLI（可选，提供多模型审查视角）
+# 参考 https://github.com/openai/codex 安装
+```
+
+### 4. 重启 Claude Code
+
+插件安装或更新后需要重启 Claude Code 才能生效。
+
+### 更新插件
+
+当仓库有新提交后：
+
+```bash
+git pull
+claude plugins update article@article
+# 重启 Claude Code
+```
+
 ## 架构
 
 ```

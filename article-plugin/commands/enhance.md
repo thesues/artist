@@ -11,6 +11,18 @@
 - `<origin>` — 必填。技术文章文件路径，支持 .md 和 .pdf 格式。
 - PDF 文件先预处理为 `.article-work/origin.pdf`、`.article-work/img/` 和 `.article-work/rewrite-round-1/origin.md`。
 
+## 进度追踪
+
+**启动任何 Agent 之前，必须先用 TaskCreate 创建任务清单，让用户能看到整体进度。**
+
+任务清单必须至少覆盖以下阶段（任务名称和粒度由你决定）：
+- 第一层并行审查
+- 第二层聚合
+- 图示渲染
+- 改写与验证循环
+
+每个任务在开始时标记为 in_progress，完成后标记为 completed。对于改写与验证循环，通过 TaskUpdate 更新任务描述来反映当前轮次进展（如当前第几轮、是否通过验证等）。
+
 ## 执行规则
 
 **必须按顺序执行以下层级，每层完成后等待依赖层结果再继续。**
