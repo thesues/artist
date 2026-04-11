@@ -29,8 +29,8 @@ background: false
 
 - 当前文章全文 `rewrite-round-N/origin.md`
 - 若 `origin.md` 中存在 `../img/...` 引用，则这些图片同样属于输入的一部分
-- N=1：综合审查报告 `rewrite-round-1/08-review-report.md`
-- N>1：内容聚合报告 `rewrite-round-N/03-content.md`
+- N=1：综合审查报告 `rewrite-round-1/05-review-report.md`
+- N>1：聚合验证报告 `rewrite-round-N/05-review-report.md`
 - 参考文章风格摘要 `.article-work/00-examples-reference.md`（如存在）
 
 > **注意：** 所有具体路径由调用方在 prompt 中指定。

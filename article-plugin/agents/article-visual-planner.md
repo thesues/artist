@@ -69,7 +69,7 @@ background: false
 ```
 
 ### 参考图示 URL
-- [描述] | [URL]（需 article-screenshot-capturer 截图）
+- [描述] | [URL]（供参考，需手动截图）
 
 ### 图示规划清单
 

@@ -45,17 +45,12 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 
 | 编号 | Agent | 文件 | 模型 | 工具 |
 |------|-------|------|------|------|
-| 1 | 事实校验 | `agents/article-fact-checker.md` | opus | WebSearch |
-| 2 | 引用查找 | `agents/article-source-finder.md` | sonnet | WebSearch |
-| 3 | 深度分析 | `agents/article-depth-analyzer.md` | opus | — |
-| 3-codex | 深度分析（Codex） | `agents/article-depth-analyzer-codex.md` | haiku+codex | Bash |
-| 4 | 逻辑审查 | `agents/article-logic-reviewer.md` | sonnet | — |
-| 5 | 风格审计 | `agents/article-style-auditor.md` | opus | — |
-| 6 | 术语检查 | `agents/article-terminology-checker.md` | sonnet | WebSearch |
-| 7 | 结构分析 | `agents/article-structure-analyzer.md` | sonnet | — |
-| 8 | 视觉规划 | `agents/article-visual-planner.md` | sonnet | WebSearch |
-| 9 | 内容聚合 | `agents/article-content-aggregator.md` | opus | — |
-| 10 | 审查聚合 | `agents/article-review-aggregator.md` | opus | — |
+| 1 | 准确性审查 | `agents/article-accuracy-checker.md` | opus | WebSearch |
+| 2 | 内容审查 | `agents/article-content-reviewer.md` | opus | — |
+| 2-codex | 内容审查（Codex） | `agents/article-content-reviewer-codex.md` | haiku+codex | Bash |
+| 3 | 风格审计 | `agents/article-style-auditor.md` | opus | — |
+| 4 | 视觉规划 | `agents/article-visual-planner.md` | sonnet | WebSearch |
+| 5 | 审查聚合 | `agents/article-review-aggregator.md` | opus | — |
 
 ---
 
@@ -66,42 +61,30 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 - 若 `<origin>` 为 `.md`：创建 `.article-work/rewrite-round-1/` 目录，将原始文件拷贝为 `.article-work/rewrite-round-1/origin.md`
 - 若 `<origin>` 为 `.pdf`：运行 PDF 预处理
 
-在**单条消息中**同时启动 Agent 1/2/3/3-codex/4/5/6/7/8（并行），使用 `mode: "auto"`。
+在**单条消息中**同时启动 Agent 1/2/2-codex/3/4（并行），使用 `mode: "auto"`。
 
-如果 `codex` CLI 不可用（`which codex` 失败），不启动 3-codex。
+如果 `codex` CLI 不可用（`which codex` 失败），不启动 2-codex。
 
 | Agent | 输入 | 输出 |
 |-------|------|------|
-| 1 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/01-facts.md` |
-| 2 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/02-sources.md` |
-| 3 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/03-depth-A.md` |
-| 3-codex | `rewrite-round-1/origin.md` 全文 + 文件路径 + 输出路径 | `.article-work/rewrite-round-1/03-depth-A-codex.md` |
-| 4 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/04-logic.md` |
-| 5 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/05-style.md` |
-| 6 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/06-terminology.md` |
-| 7 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/07-structure.md` |
-| 8 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/07-visual.md` |
+| 1 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/01-accuracy.md` |
+| 2 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/02-content.md` |
+| 2-codex | `rewrite-round-1/origin.md` 全文 + 文件路径 + 输出路径 | `.article-work/rewrite-round-1/02-content-codex.md` |
+| 3 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/03-style.md` |
+| 4 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/04-visual.md` |
 
 ---
 
-## 第二层 — 内容聚合（等待第一层完成）
+## 第二层 — 聚合（等待第一层完成）
 
 | Agent | 输入 | 输出 |
 |-------|------|------|
-| 9 | `03-depth-A.md` + `03-depth-A-codex.md`（如存在） + `04-logic.md` | `.article-work/rewrite-round-1/03-content.md` |
-
----
-
-## 第三层 — 总聚合（等待第二层完成）
-
-| Agent | 输入 | 输出 |
-|-------|------|------|
-| 10 | `01-facts.md` + `02-sources.md` + `03-content.md` + `05-style.md` + `06-terminology.md` + `07-structure.md` + `07-visual.md` | `.article-work/rewrite-round-1/08-review-report.md` |
+| 5 | `01-accuracy.md` + `02-content.md` + `02-content-codex.md`（如存在） + `03-style.md` + `04-visual.md` | `.article-work/rewrite-round-1/05-review-report.md` |
 
 ---
 
 ## 输出
 
-向用户展示 `.article-work/rewrite-round-1/08-review-report.md` 全文。
+向用户展示 `.article-work/rewrite-round-1/05-review-report.md` 全文。
 
 如需查看其他维度的审查结果，可查看 `.article-work/rewrite-round-1/` 目录中的其他文件。

@@ -1,6 +1,6 @@
 Date: 2026-04-11
 TaskStatus: completed
-Task scope: Build article-plugin with 14 sub-agents for technical article enhancement
-Current summary: All 20 features implemented. 14 agents, 2 commands, PDF skill, codex-task.mjs, README created.
-Main gaps: None — all features complete, pending git commit
+Task scope: Simplify article-plugin architecture from 14 agents/4 layers to 8 agents/2 layers
+Current summary: Consolidated agents — 3 accuracy agents merged into accuracy-checker, 3 content agents merged into content-reviewer, codex agent expanded to content-reviewer-codex, removed content-aggregator/screenshot-capturer, kept diagram-renderer. Updated commands, CLAUDE.md, README.
+Main gaps: None — all files updated, old agents deleted
 Next steps: Git commit, then end-to-end testing with real articles
