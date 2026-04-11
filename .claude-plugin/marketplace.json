@@ -1,0 +1,20 @@
+{
+  "name": "article",
+  "owner": {
+    "name": "artist"
+  },
+  "metadata": {
+    "description": "技术调研文章多维度审查与增强插件，含去AI味、事实校验、深度分析等8个Agent。"
+  },
+  "plugins": [
+    {
+      "name": "article",
+      "source": "./article-plugin",
+      "description": "技术调研文章多维度审查与增强，支持事实校验、深度分析、去AI味、迭代改写。",
+      "author": {
+        "name": "artist"
+      },
+      "category": "productivity"
+    }
+  ]
+}
