@@ -77,7 +77,9 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 
 在**单条消息中**同时启动 Agent 1/2/2-codex/3/4（并行），使用 `mode: "auto"`。
 
-如果 `codex` CLI 不可用（`which codex` 失败），不启动 2-codex。
+**Codex 可用性检查（启动 Agent 前执行）：** 依次运行以下两个命令，任一失败则跳过 2-codex：
+1. `which codex` — 检查 codex CLI 是否安装
+2. `codex login status` — 检查是否已登录（输出 "Logged in" 表示可用）
 
 | Agent | 输入 | 输出 |
 |-------|------|------|
