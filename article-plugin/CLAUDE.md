@@ -16,8 +16,8 @@
 ### 第二层：聚合（1 个 Agent）
 - `article-review-aggregator` — opus, 汇总全部报告，交叉验证（含 Codex 视角），生成统一审查报告
 
-### 图示渲染（1 个 Agent）
-- `article-diagram-renderer` — sonnet, Bash, 用 Mermaid 渲染流程图/架构图
+### 图示渲染（1 个 Agent，必须在改写前完成）
+- `article-diagram-renderer` — sonnet, Bash, 用 Mermaid 渲染流程图/架构图，渲染结果供 rewriter 插入文章
 
 ### 迭代改写与验证循环（1 个 Agent + 验证回路）
 - `article-rewriter` — opus, AskUserQuestion, 根据审查报告逐条修改

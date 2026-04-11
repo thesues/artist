@@ -10,7 +10,9 @@
  *   node codex-task.mjs --cwd <dir> --prompt-file <path>
  *   node codex-task.mjs --cwd <dir> --prompt-file <path> --images-from-markdown <origin.md>
  *   node codex-task.mjs --cwd <dir> --prompt-file <path> --image <img1> --image <img2>
- *   可选：--model <model> --effort <effort>
+ *   可选：--model <model> --effort <effort> --output-file <path>
+ *
+ * --output-file: 将结果直接写入文件而非 stdout（推荐，避免 stderr 进度日志与结果混淆）
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -31,6 +33,7 @@ const { values: args } = parseArgs({
     "images-from-markdown": { type: "string", multiple: true, default: [] },
     model: { type: "string", default: "" },
     effort: { type: "string", default: "" },
+    "output-file": { type: "string", default: "" },
   },
   strict: false,
 });
@@ -93,6 +96,8 @@ class CodexClient {
     this.closed = false;
     this.stderr = "";
     this.proc = null;
+    this._startTime = Date.now();
+    this._heartbeat = null;
 
     // turn capture state
     this.turnCompleted = false;
@@ -148,6 +153,15 @@ class CodexClient {
       },
     });
     this.notify("initialized", {});
+
+    // heartbeat: print elapsed time every 15s so caller knows we're alive
+    this._startTime = Date.now();
+    this._heartbeat = setInterval(() => {
+      if (this.turnCompleted || this.closed) return;
+      const elapsed = ((Date.now() - this._startTime) / 1000).toFixed(0);
+      process.stderr.write(`[codex ${elapsed}s] ♡ still working...\n`);
+    }, 15_000);
+    this._heartbeat.unref?.();
   }
 
   request(method, params) {
@@ -166,6 +180,7 @@ class CodexClient {
   async close() {
     if (this.closed) return;
     this.closed = true;
+    if (this._heartbeat) clearInterval(this._heartbeat);
     if (this.proc && !this.proc.killed) {
       this.proc.stdin.end();
       setTimeout(() => {
@@ -213,19 +228,42 @@ class CodexClient {
   }
 
   _handleNotification(msg) {
+    const elapsed = ((Date.now() - this._startTime) / 1000).toFixed(1);
+
     switch (msg.method) {
-      case "item/completed":
-        if (msg.params?.item?.type === "agentMessage" && msg.params.item.text) {
-          this.lastAgentMessage = msg.params.item.text;
+      case "item/completed": {
+        const item = msg.params?.item;
+        if (item?.type === "agentMessage" && item.text) {
+          this.lastAgentMessage = item.text;
+          const preview = item.text.slice(0, 80).replace(/\n/g, " ");
+          process.stderr.write(`[codex ${elapsed}s] ✓ agentMessage completed (${preview}...)\n`);
+        } else if (item?.type) {
+          process.stderr.write(`[codex ${elapsed}s] ✓ ${item.type} completed\n`);
         }
         break;
+      }
+      case "item/created": {
+        const item = msg.params?.item;
+        if (item?.type) {
+          const detail = item.type === "functionCall" ? ` → ${item.name ?? ""}` : "";
+          process.stderr.write(`[codex ${elapsed}s] + ${item.type} created${detail}\n`);
+        }
+        break;
+      }
       case "error":
         this.error = msg.params?.error;
-        process.stderr.write(`Codex error: ${msg.params?.error?.message ?? "unknown"}\n`);
+        process.stderr.write(`[codex ${elapsed}s] ✗ error: ${msg.params?.error?.message ?? "unknown"}\n`);
         break;
       case "turn/completed":
+        process.stderr.write(`[codex ${elapsed}s] ✓ turn completed\n`);
         this.turnCompleted = true;
         if (this.resolveTurn) this.resolveTurn();
+        break;
+      default:
+        // log other notifications so we know codex is alive
+        if (msg.method) {
+          process.stderr.write(`[codex ${elapsed}s] … ${msg.method}\n`);
+        }
         break;
     }
   }
@@ -250,7 +288,9 @@ async function main() {
   const client = new CodexClient();
 
   try {
+    process.stderr.write("[codex] connecting to codex app-server...\n");
     await client.connect(cwd);
+    process.stderr.write("[codex] connected, starting thread...\n");
 
     // start thread
     const threadResp = await client.request("thread/start", {
@@ -263,6 +303,7 @@ async function main() {
       experimentalRawEvents: false,
     });
     const threadId = threadResp.thread.id;
+    process.stderr.write(`[codex] thread ${threadId} started, sending prompt...\n`);
 
     // start turn — wait for completion via notification
     const turnDone = new Promise((resolve, reject) => {
@@ -289,7 +330,13 @@ async function main() {
 
     // output result
     const output = client.lastAgentMessage || "";
-    process.stdout.write(output);
+    if (args["output-file"]) {
+      const outPath = path.resolve(cwd, args["output-file"]);
+      fs.writeFileSync(outPath, output, "utf8");
+      process.stderr.write(`[codex] result written to ${outPath}\n`);
+    } else {
+      process.stdout.write(output);
+    }
 
     await client.close();
     process.exit(client.error ? 1 : 0);

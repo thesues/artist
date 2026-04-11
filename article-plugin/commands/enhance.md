@@ -85,7 +85,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 
 ---
 
-## 图示渲染（等待第二层完成，与改写可并行）
+## 图示渲染（等待第二层完成，必须在改写前完成）
 
 如果 `04-visual.md` 中有需要渲染的 Mermaid 图示：
 
@@ -95,13 +95,15 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 
 如果无图示需求，跳过本步骤。
 
+**必须等待图示渲染完成后再启动改写。** Rewriter 需要知道哪些图已渲染，才能将它们插入到正确位置。
+
 ---
 
-## 改写 + 验证循环（等待第二层完成）
+## 改写 + 验证循环（等待第二层和图示渲染完成）
 
 ```
 步骤 1（仅一次）：
-Agent 7 读 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md + ../img/... 图片
+Agent 7 读 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md + ../img/... 图片（含 diagram_N.png）
   → 输出 rewrite-round-1/06-revised-origin.md + rewrite-round-1/06-revision-notes.md
 
 步骤 2（验证循环，N 从 2 开始）：
@@ -125,7 +127,12 @@ Agent 7 读 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md + ..
 
 | 输入 | 输出 |
 |------|------|
-| `rewrite-round-1/origin.md` + `../img/...` 图片 + `05-review-report.md` | `rewrite-round-1/06-revised-origin.md` + `rewrite-round-1/06-revision-notes.md` |
+| `rewrite-round-1/origin.md` + `../img/...` 图片（含已渲染的 `diagram_N.png`） + `05-review-report.md` | `rewrite-round-1/06-revised-origin.md` + `rewrite-round-1/06-revision-notes.md` |
+
+**启动 Agent 7 时，prompt 必须包含以下信息：**
+- `../img/` 目录下所有已渲染的 `diagram_N.png` 文件列表
+- `04-visual.md` 或 `05-review-report.md` 中对应的图示插入位置建议（图示名称 → 建议插入的章节）
+- 明确指令：将渲染好的 Mermaid 图示以 `![图示说明](../img/diagram_N.png)` 格式插入到对应位置
 
 ### 步骤 2 — 验证循环（N 从 2 开始）
 
@@ -140,7 +147,7 @@ Agent 7 读 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md + ..
 **判断退出条件：**
 
 - `05-review-report.md` 无 🔴 → 退出循环，最终修改稿 = `rewrite-round-{N}/origin.md`
-- 有 🔴 且 N < 4 → Agent 7 读 `rewrite-round-{N}/origin.md` + `../img/...` 图片 + `05-review-report.md`，输出 `06-revised-origin.md` + `06-revision-notes.md`，N++
+- 有 🔴 且 N < 4 → Agent 7 读 `rewrite-round-{N}/origin.md` + `../img/...` 图片（含 `diagram_N.png`） + `05-review-report.md`，输出 `06-revised-origin.md` + `06-revision-notes.md`，N++
 - N = 4 且仍有 🔴 → 强制退出，标注未解决的问题
 
 ### 循环结束 — 输出最终结果

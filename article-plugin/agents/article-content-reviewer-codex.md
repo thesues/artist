@@ -116,18 +116,21 @@ background: false
 
 ### 步骤 3：调用 Codex
 
+使用 `--output-file` 让脚本直接将结果写入目标文件，避免 stdout/stderr 混淆：
+
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/codex-task.mjs" \
   --cwd "$(pwd)" \
   --prompt-file ".article-work/.codex-prompt-content.md" \
-  --images-from-markdown "<文章路径>"
+  --images-from-markdown "<文章路径>" \
+  --output-file "<输出文件路径>"
 ```
 
-### 步骤 4：写入结果
+**Bash timeout 必须设为 600000**（10 分钟），Codex 审查长文章耗时较长。
 
-将 Codex 返回的 stdout 用 Write 工具写入指定的输出文件路径（通过 prompt 传入）。
+### 步骤 4：验证结果
 
-如果 Codex 调用失败（exit code 非 0 或输出为空），在输出文件中写入错误说明，并在文件开头标注 `⚠️ Codex 调用失败`。
+检查输出文件是否存在且非空。如果 Codex 调用失败（exit code 非 0 或输出文件为空/不存在），用 Write 工具在输出文件中写入错误说明，并在文件开头标注 `⚠️ Codex 调用失败`。
 
 ## 注意事项
 
