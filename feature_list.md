@@ -44,6 +44,7 @@
 - 目标：用 Mermaid 渲染流程图/架构图/时序图
 - 验收：agent md 文件格式正确，包含 mmdc 渲染命令
 - passes: true
+- 备注：已在 F15 被 SVG 链路替代
 
 ## F10: Agent — article-rewriter (opus + AskUserQuestion)
 - 目标：根据审查报告逐条修改，支持多轮迭代，与用户交互确认
@@ -68,4 +69,14 @@
 ## F14: 集成验证与 README
 - 目标：端到端测试 /review 和 /enhance 命令，更新 README
 - 验收：README 包含完整使用说明和架构图
+- passes: true
+
+## F15: SVG 图示链路替换 Mermaid
+- 目标：让 visual-planner 直接输出 SVG 源码，diagram-renderer 仅负责落盘为 .svg；完全移除 Mermaid/mmdc 依赖。达到 claude.ai visualizer 级别的样式可控性（圆角 + 虚线分组 + 多色分区 + 中英混排）
+- 验收：
+  - `article-diagram-renderer.md` 不再引用 Mermaid/mmdc，改为抽取 ```svg 代码块写入 `.article-work/img/diagram_N.svg`
+  - `article-visual-planner.md` 给出 SVG 编写规范（xmlns、字体 fallback、颜色限制、禁用 foreignObject）与样本模板
+  - `enhance.md` / `CLAUDE.md` / `README.md` 同步更新命名、依赖、Agent 描述
+  - grep 在 `article-plugin/` 下无 `mermaid` / `mmdc` 残留（除 F09 历史记录外）
+  - 手工构造一个包含 ```svg 代码块的 04-visual.md，renderer 能正确生成 `diagram_1.svg` 且浏览器可打开
 - passes: true

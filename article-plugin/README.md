@@ -29,12 +29,11 @@ claude plugins list
 # PDF 处理（如果需要处理 PDF 输入）
 pip install pypdf
 
-# Mermaid 图表渲染（如果需要生成流程图/架构图）
-npm install -g @mermaid-js/mermaid-cli
-
 # Codex CLI（可选，提供多模型审查视角）
 # 参考 https://github.com/openai/codex 安装
 ```
+
+图示由 `article-visual-planner` 直接输出 SVG 源码，`article-diagram-renderer` 仅负责落盘为 `.svg` 文件，无需额外安装渲染工具链。（可选：安装 `libxml2-utils` 的 `xmllint` 以启用 SVG 格式校验。）
 
 ### 4. 重启 Claude Code
 
@@ -63,8 +62,8 @@ claude plugins update article@article
 第二层：聚合
 └── article-review-aggregator        opus    汇总全部报告 + 交叉验证
 
-图示渲染
-└── article-diagram-renderer         sonnet  Mermaid 渲染
+图示落盘
+└── article-diagram-renderer         sonnet  抽取 SVG 代码块并写入 .svg
 
 迭代改写
 └── article-rewriter                 opus    根据报告逐条修改 + 用户交互
@@ -108,7 +107,7 @@ claude plugins update article@article
   origin.pdf                 PDF 原件（仅 PDF 输入）
   img/                       图片目录
     fig_N.{jpg,png}          PDF 提取图
-    diagram_N.png            Mermaid 渲染图
+    diagram_N.svg            SVG 图示（visual-planner 生成 + renderer 落盘）
   rewrite-round-1/           第1轮
     origin.md                输入文章
     01-accuracy.md           准确性审查（事实+引用+术语）
@@ -127,7 +126,7 @@ claude plugins update article@article
 - Claude Code CLI
 - `pypdf` (Python, PDF 处理)
 - `codex` CLI (可选, Codex 多样性视角)
-- `mmdc` / `@mermaid-js/mermaid-cli` (可选, 图表渲染)
+- `xmllint` (可选, SVG 格式校验；通常随 `libxml2-utils` 提供)
 
 ## 参考文章库
 

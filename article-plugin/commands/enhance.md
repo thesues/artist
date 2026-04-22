@@ -63,7 +63,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 | 3 | 风格审计 | `agents/article-style-auditor.md` | opus | — |
 | 4 | 视觉规划 | `agents/article-visual-planner.md` | sonnet | WebSearch |
 | 5 | 审查聚合 | `agents/article-review-aggregator.md` | opus | — |
-| 6 | 图表渲染 | `agents/article-diagram-renderer.md` | sonnet | Bash |
+| 6 | 图示落盘 | `agents/article-diagram-renderer.md` | sonnet | Read, Write, Grep, Glob, Bash |
 | 7 | 迭代改写 | `agents/article-rewriter.md` | opus | WebSearch, AskUserQuestion |
 
 ---
@@ -99,17 +99,17 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 
 ---
 
-## 图示渲染（等待第二层完成，必须在改写前完成）
+## 图示落盘（等待第二层完成，必须在改写前完成）
 
-如果 `04-visual.md` 中有需要渲染的 Mermaid 图示：
+如果 `04-visual.md` 中有 ```svg 代码块（即 visual-planner 生成了新图示）：
 
 | Agent | 输入 | 输出 |
 |-------|------|------|
-| 6 | `04-visual.md` 中的 Mermaid 代码 | `.article-work/img/diagram_N.png` |
+| 6 | `04-visual.md` 中的 SVG 代码块 | `.article-work/img/diagram_N.svg` |
 
 如果无图示需求，跳过本步骤。
 
-**必须等待图示渲染完成后再启动改写。** Rewriter 需要知道哪些图已渲染，才能将它们插入到正确位置。
+**必须等待图示落盘完成后再启动改写。** Rewriter 需要知道哪些图已生成，才能将它们插入到正确位置。
 
 ---
 
@@ -117,7 +117,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 
 ```
 步骤 1（仅一次）：
-Agent 7 读 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md + ../img/... 图片（含 diagram_N.png）
+Agent 7 读 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md + ../img/... 图片（含 diagram_N.svg）
   → 输出 rewrite-round-1/06-revised-origin.md + rewrite-round-1/06-revision-notes.md
 
 步骤 2（验证循环，N 从 2 开始）：
@@ -141,12 +141,12 @@ Agent 7 读 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md + ..
 
 | 输入 | 输出 |
 |------|------|
-| `rewrite-round-1/origin.md` + `../img/...` 图片（含已渲染的 `diagram_N.png`） + `05-review-report.md` | `rewrite-round-1/06-revised-origin.md` + `rewrite-round-1/06-revision-notes.md` |
+| `rewrite-round-1/origin.md` + `../img/...` 图片（含已落盘的 `diagram_N.svg`） + `05-review-report.md` | `rewrite-round-1/06-revised-origin.md` + `rewrite-round-1/06-revision-notes.md` |
 
 **启动 Agent 7 时，prompt 必须包含以下信息：**
-- `../img/` 目录下所有已渲染的 `diagram_N.png` 文件列表
+- `../img/` 目录下所有已落盘的 `diagram_N.svg` 文件列表
 - `04-visual.md` 或 `05-review-report.md` 中对应的图示插入位置建议（图示名称 → 建议插入的章节）
-- 明确指令：将渲染好的 Mermaid 图示以 `![图示说明](../img/diagram_N.png)` 格式插入到对应位置
+- 明确指令：将 SVG 图示以 `![图示说明](../img/diagram_N.svg)` 格式插入到对应位置
 
 ### 步骤 2 — 验证循环（N 从 2 开始）
 
@@ -161,7 +161,7 @@ Agent 7 读 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md + ..
 **判断退出条件：**
 
 - `05-review-report.md` 无 🔴 → 退出循环，最终修改稿 = `rewrite-round-{N}/origin.md`
-- 有 🔴 且 N < 4 → Agent 7 读 `rewrite-round-{N}/origin.md` + `../img/...` 图片（含 `diagram_N.png`） + `05-review-report.md`，输出 `06-revised-origin.md` + `06-revision-notes.md`，N++
+- 有 🔴 且 N < 4 → Agent 7 读 `rewrite-round-{N}/origin.md` + `../img/...` 图片（含 `diagram_N.svg`） + `05-review-report.md`，输出 `06-revised-origin.md` + `06-revision-notes.md`，N++
 - N = 4 且仍有 🔴 → 强制退出，标注未解决的问题
 
 ### 循环结束 — 输出最终结果
@@ -182,9 +182,9 @@ Agent 7 读 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md + ..
 ```
 .article-work/
   origin.pdf                 用户原始 PDF 拷贝（仅 PDF 输入存在）
-  img/                       图片目录（PDF 提取图 + Mermaid 渲染图）
+  img/                       图片目录（PDF 提取图 + SVG 图示）
     fig_1.jpg                PDF 提取图
-    diagram_1.png            Mermaid 渲染图
+    diagram_1.svg            SVG 图示（visual-planner 生成、renderer 落盘）
   00-examples-reference.md   参考文章风格摘要（如有参考文章库）
   .codex-prompt-content.md   Codex prompt 临时文件
   rewrite-round-1/           第1轮（初始审查 + 首次改写）

@@ -1,6 +1,6 @@
-Date: 2026-04-11
+Date: 2026-04-22
 TaskStatus: completed
-Task scope: Simplify article-plugin architecture from 14 agents/4 layers to 8 agents/2 layers
-Current summary: Consolidated agents — 3 accuracy agents merged into accuracy-checker, 3 content agents merged into content-reviewer, codex agent expanded to content-reviewer-codex, removed content-aggregator/screenshot-capturer, kept diagram-renderer. Updated commands, CLAUDE.md, README.
-Main gaps: None — all files updated, old agents deleted
-Next steps: Git commit, then end-to-end testing with real articles
+Task scope: F15 — 用 SVG 替换 Mermaid 作为图示生成方案
+Current summary: 重写 article-diagram-renderer 为 SVG 代码块落盘（不再调用 mmdc）；article-visual-planner 改为直接输出 ```svg 代码块并给出编写规范与样本模板；同步更新 enhance.md / CLAUDE.md / README.md 的命名、依赖、Agent 描述；feature_list.md 新增 F15。
+Main gaps: 未做端到端集成测试（需要真实文章跑 /enhance 验证 visual-planner 生成 SVG 的质量和 renderer 落盘正确性）。
+Next steps: 真实文章端到端验证后在 README 补充样例截图；如需 PDF 导出，再评估是否加 rsvg-convert 栅格化路径。
