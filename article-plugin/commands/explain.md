@@ -158,7 +158,9 @@ cp <input.md> .article-work-explain/source/origin.md
 
 - 全部 6 类输入文件的完整路径
 - `img/` 目录下所有 `diagram_N.svg` 文件清单与对应的 `04-visual.md` 中"建议插入位置"
-- 明确指令：图示以 `![图示标题](../img/diagram_N.svg)` 插入；最终输出写到 `05-explanation.md`
+- 明确指令：图示以 `![图示标题](img/diagram_N.svg)` 插入；最终输出写到 `.article-work-explain/05-explanation.md`
+  - **路径说明**：`05-explanation.md` 与 `img/` 同级位于 `.article-work-explain/` 根目录，因此用 `img/diagram_N.svg`（相对路径，不带 `../`）。`source/origin.md` 中的 `../img/...` 引用是相对 `source/` 子目录，不要照搬到 `05-explanation.md`。
+- 若 `origin.md` 中带有 `../img/fig_N.*`（PDF 提取或本地图片），写入 `05-explanation.md` 时同样改写为 `img/fig_N.*`
 
 **explainer 单次运行成稿，不做多轮迭代。**
 

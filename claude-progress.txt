@@ -1,6 +1,6 @@
 Date: 2026-04-24
 TaskStatus: completed
-Task scope: F16 — 新增 /explain 命令（英文论文/网页 → 中文讲解稿）
-Current summary: 新增 3 个 Agent（article-translator / article-related-finder / article-explainer）+ 1 个 command（commands/explain.md），编排为单轮三种输入（URL / PDF / MD）→ 第一层 4 Agent 并行（translator + accuracy-checker + related-finder + visual-planner）→ diagram-renderer 落盘 → explainer 合成。工作目录 `.article-work-explain/` 与 `.article-work/` 隔离，避免与 /review /enhance 互踩。CLAUDE.md / README.md / feature_list.md 同步更新。
-Main gaps: 未做端到端真实运行验证（需要选一篇真实英文论文或博客触发 /explain 跑通全链路，重点验证：1) URL 输入下 WebFetch markdown 抽取质量，2) PDF 输入下 source/origin.md 路径迁移正确，3) diagram-renderer 落盘到 `.article-work-explain/img/`（注意：默认是 `.article-work/img/`，需要 prompt 显式覆盖），4) explainer 译注/图示/延伸阅读三段格式正确）。
-Next steps: 选取一篇英文论文做端到端 smoke test；如发现 diagram-renderer 不能从 prompt 中读取覆盖路径，再调整 renderer agent 让其支持显式参数，或在 explain.md 中改为手动从 04-visual.md 抽 SVG 写盘的 Bash 步骤。
+Task scope: F17 — 修复 /explain 输出 05-explanation.md 中的图片相对路径错误（../img/ → img/）
+Current summary: 用户在 /Users/dongmao.zhang/upstream/llmwiki 下用 /explain 跑了一遍，发现 `.article-work-explain/05-explanation.md` 里 4 张 SVG 图示都引用为 `../img/diagram_N.svg`，但 `05-explanation.md` 本身就在 `.article-work-explain/` 根目录、与 `img/` 同级，`../img/...` 会越过工作目录解析到 `llmwiki/img/`，渲染时 404。根因：`source/origin.md` 在 `source/` 子目录里，那里 `../img/...` 是正确的；但 `article-explainer` 与 `commands/explain.md` 把这个写法照搬到 `05-explanation.md` 上就错位了。本次：1) 直接 sed 修复用户已生成的 05-explanation.md；2) 修 `agents/article-explainer.md` 的图示集成规则与 PDF 提取图片的路径改写说明；3) 修 `commands/explain.md` 第二层 explainer 调用指令并加上路径解释。
+Main gaps: 仍未做端到端 smoke test；本次只验证了"手动 sed 替换后路径正确"，没有重新跑一遍 /explain 验证 explainer 现在真的会按新规则写。
+Next steps: 下一次有英文论文/博客触发 /explain 时，作为回归用例验证 explainer 写出的 05-explanation.md 直接采用 `img/...`、无需手动 sed。

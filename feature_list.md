@@ -91,3 +91,11 @@
   - `CLAUDE.md` / `README.md` 同步更新：命令清单、Agent 清单、中间文件目录
   - 支持 `--resume` 从中断处继续
 - passes: true
+
+## F17: 修复 /explain 输出图片相对路径错误
+- 目标：`05-explanation.md` 在 `.article-work-explain/` 根目录，应使用 `img/diagram_N.svg` 引用，而非 `../img/...`（后者会越过工作目录到达父目录）
+- 验收：
+  - `agents/article-explainer.md` 图示集成规则改为 `img/diagram_N.svg`，并解释路径与 `source/origin.md` 不同
+  - `commands/explain.md` 第二层 explainer 调用指令同步更正
+  - 实际生成的 `05-explanation.md` 中所有 `![](img/diagram_*.svg)` 可被 markdown 渲染器正常解析（不再 404）
+- passes: true

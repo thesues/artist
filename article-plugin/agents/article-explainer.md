@@ -47,9 +47,10 @@ background: false
 
 ### 四、图示集成
 - 对每个 `img/diagram_N.svg`，根据 `04-visual.md` 中的"建议插入位置"插入到译稿对应章节
-- 插入格式：`![图示标题](../img/diagram_N.svg)`
+- 插入格式：`![图示标题](img/diagram_N.svg)`
+  - **注意路径**：`05-explanation.md` 输出在 `.article-work-explain/` 根目录，与 `img/` 同级，因此使用 `img/diagram_N.svg`（不要写成 `../img/...`，那是相对 `source/origin.md` 的路径）
 - 紧跟一句"图 N：..."的简短说明（用译注块或正文均可）
-- PDF 提取的 `fig_N.*` 引用按译稿原样保留
+- PDF 提取的 `fig_N.*` 引用：原 `origin.md` 中是 `../img/fig_N.*`（相对 `source/`），写入 `05-explanation.md` 时需改写为 `img/fig_N.*`（相对工作目录根）
 
 ### 五、相关阅读
 - 在文末新增 `## 延伸阅读` 一节，整理 related-finder 的清单
