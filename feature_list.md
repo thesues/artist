@@ -80,3 +80,14 @@
   - grep 在 `article-plugin/` 下无 `mermaid` / `mmdc` 残留（除 F09 历史记录外）
   - 手工构造一个包含 ```svg 代码块的 04-visual.md，renderer 能正确生成 `diagram_1.svg` 且浏览器可打开
 - passes: true
+
+## F16: /explain 英文论文/网页中文讲解命令
+- 目标：新增 `/explain <URL|PDF|MD>` 命令，支持英文论文/网页文章 → 中文讲解稿（含译文、事实订正、SVG 图示、相关文献），单轮成稿不迭代
+- 验收：
+  - 新增 3 个 Agent：`article-translator`（opus）、`article-related-finder`（sonnet+WebSearch+WebFetch）、`article-explainer`（opus）
+  - 新增 `commands/explain.md`，编排：输入预处理 → 第一层 4 Agent 并行（translator/accuracy-checker/related-finder/visual-planner）→ diagram-renderer 落盘 → explainer 合成
+  - 工作目录使用 `.article-work-explain/`（与 `.article-work/` 隔离）
+  - 三种输入形态：URL（WebFetch）、PDF（复用 prepare_article_pdf.py）、Markdown（直接拷贝）
+  - `CLAUDE.md` / `README.md` 同步更新：命令清单、Agent 清单、中间文件目录
+  - 支持 `--resume` 从中断处继续
+- passes: true

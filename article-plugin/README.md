@@ -1,6 +1,6 @@
 # Article Enhancement Plugin
 
-技术调研文章多维度审查与增强插件。通过 8 个专业 Agent 协同工作，对技术文章进行事实校验、深度分析、逻辑审查、去 AI 味、术语规范化等多维度增强。
+技术调研文章多维度审查、增强与翻译讲解插件。通过 11 个专业 Agent 协同工作：对中文文章做事实校验、深度分析、去 AI 味、术语规范化与多轮迭代改写；对英文论文/网页做翻译 + 译注 + 图示 + 延伸阅读的中文讲解稿。
 
 ## 安装
 
@@ -51,6 +51,8 @@ claude plugins update article@article
 
 ## 架构
 
+### /review 与 /enhance（中文文章审查 + 增强）
+
 ```
 第一层：并行分析（最多 5 个 Agent）
 ├── article-accuracy-checker         opus    事实+引用+术语 + WebSearch
@@ -69,6 +71,28 @@ claude plugins update article@article
 └── article-rewriter                 opus    根据报告逐条修改 + 用户交互
     └── 每轮修改后重跑 content-reviewer + style-auditor + aggregator
     └── 循环直到无 🔴 严重问题，最多 3 轮
+```
+
+### /explain（英文论文/网页中文讲解）
+
+```
+输入预处理
+├── URL              WebFetch 抓取为 markdown
+├── PDF              prepare_article_pdf.py 提取正文 + 图片
+└── Markdown         直接拷贝
+   └── 输出 source/origin.md + img/
+
+第一层：并行分析（4 个 Agent，单条消息同时启动）
+├── article-translator            opus    英→中翻译，术语对照表
+├── article-accuracy-checker      opus    事实+引用+术语校验（复用）
+├── article-related-finder        sonnet  WebSearch+WebFetch 找相关文献并核验链接
+└── article-visual-planner        sonnet  规划 SVG 图示（复用）
+
+图示落盘
+└── article-diagram-renderer            sonnet  落盘到 .article-work-explain/img/
+
+第二层：合成（单 Agent，单轮成稿）
+└── article-explainer             opus    译文 + 译注 + 图示 + 延伸阅读 → 中文讲解稿
 ```
 
 ## 命令
@@ -93,14 +117,27 @@ claude plugins update article@article
 
 支持 `--resume` 从中断处继续。
 
+### `/explain <file 或 URL>` — 英文文章中文讲解
+
+把英文论文或网页文章翻译为中文，并加入事实订正、相关文献、SVG 图示，单轮输出可发布的讲解稿。
+
+```bash
+/explain https://arxiv.org/abs/2401.12345
+/explain paper.pdf
+/explain english-blog.md
+```
+
+工作目录为 `.article-work-explain/`（与 `/review` `/enhance` 互不影响）；最终成稿位于 `.article-work-explain/05-explanation.md`。支持 `--resume`。
+
 ## 支持的输入格式
 
 - **Markdown (.md)** — 直接处理
 - **PDF (.pdf)** — 自动预处理为 Markdown + 提取嵌入图片
+- **URL** — 仅 `/explain` 支持，通过 WebFetch 抓取为 markdown
 
 ## 中间文件
 
-所有中间状态写入 `.article-work/` 目录：
+### `/review` 与 `/enhance`：写入 `.article-work/`
 
 ```
 .article-work/
@@ -119,6 +156,24 @@ claude plugins update article@article
     06-revised-origin.md     改写后文章
     06-revision-notes.md     改写说明
   rewrite-round-N/           后续轮次
+```
+
+### `/explain`：写入 `.article-work-explain/`
+
+```
+.article-work-explain/
+  source/
+    origin.md                英文原文（统一形态）
+    origin.pdf               PDF 输入时保留
+    origin.url               URL 输入时保留
+  img/
+    fig_N.{jpg,png}          PDF 提取图
+    diagram_N.svg            visual-planner 生成、renderer 落盘
+  01-translation.md          中文译稿 + 术语对照表
+  02-accuracy.md             事实/引用/术语审查
+  03-related.md              相关文献清单（WebFetch 核验过链接）
+  04-visual.md               视觉规划 + SVG 源码
+  05-explanation.md          ★ 最终中文讲解稿
 ```
 
 ## 依赖

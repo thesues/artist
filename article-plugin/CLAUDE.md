@@ -13,6 +13,11 @@
 - `article-style-auditor` — opus, 去 AI 味核心 Agent，检测模板化表达
 - `article-visual-planner` — sonnet, WebSearch, 规划图示、截取参考图
 
+### /explain 专用 Agent
+- `article-translator` — opus, WebSearch, 英文 → 中文准确翻译，保留专业术语，输出术语对照表
+- `article-related-finder` — sonnet, WebSearch+WebFetch, 检索相关论文/项目并核验链接
+- `article-explainer` — opus, 合成讲解稿（译文 + 译注 + 图示 + 延伸阅读），单轮成稿
+
 ### 第二层：聚合（1 个 Agent）
 - `article-review-aggregator` — opus, 汇总全部报告，交叉验证（含 Codex 视角），生成统一审查报告
 
@@ -28,12 +33,21 @@
 ## 命令
 - `/review <file>` — 快速审查，不修改（commands/review.md）
 - `/enhance <file>` — 完整增强，含迭代改写（commands/enhance.md）
+- `/explain <file 或 URL>` — 英文论文/网页文章中文讲解（commands/explain.md）
+  - 单轮成稿；输入支持 URL / PDF / .md
+  - 工作目录 `.article-work-explain/`，与 `/review` `/enhance` 互不干扰
+  - 复用 accuracy-checker / visual-planner / diagram-renderer
+  - 新增 article-translator / article-related-finder / article-explainer 三个 Agent
 
 ## 中间文件
-- 所有中间状态写入 `.article-work/` 目录
-- PDF 输入时，`.article-work/origin.pdf` 保留原始文件，`.article-work/img/` 保留提取图片
-- 各轮次文件在 `.article-work/rewrite-round-N/`
-- 文件命名约定：01-accuracy, 02-content, 02-content-codex, 03-style, 04-visual, 05-review-report, 06-revised-origin, 06-revision-notes
+- `/review` 和 `/enhance`：所有中间状态写入 `.article-work/` 目录
+  - PDF 输入时，`.article-work/origin.pdf` 保留原始文件，`.article-work/img/` 保留提取图片
+  - 各轮次文件在 `.article-work/rewrite-round-N/`
+  - 文件命名约定：01-accuracy, 02-content, 02-content-codex, 03-style, 04-visual, 05-review-report, 06-revised-origin, 06-revision-notes
+- `/explain`：所有中间状态写入 `.article-work-explain/` 目录（独立于上者）
+  - 输入统一为 `source/origin.md`（PDF 时同时保留 `source/origin.pdf`、URL 时同时保留 `source/origin.url`）
+  - 图片在 `img/`（fig_N.* + diagram_N.svg）
+  - 文件命名约定：01-translation, 02-accuracy, 03-related, 04-visual, 05-explanation
 
 ## PDF 输入
 - `.pdf` 输入先预处理为 `origin.pdf + img/ + rewrite-round-1/origin.md`

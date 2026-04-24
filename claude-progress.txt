@@ -1,6 +1,6 @@
-Date: 2026-04-22
+Date: 2026-04-24
 TaskStatus: completed
-Task scope: F15 — 用 SVG 替换 Mermaid 作为图示生成方案
-Current summary: 重写 article-diagram-renderer 为 SVG 代码块落盘（不再调用 mmdc）；article-visual-planner 改为直接输出 ```svg 代码块并给出编写规范与样本模板；同步更新 enhance.md / CLAUDE.md / README.md 的命名、依赖、Agent 描述；feature_list.md 新增 F15。
-Main gaps: 未做端到端集成测试（需要真实文章跑 /enhance 验证 visual-planner 生成 SVG 的质量和 renderer 落盘正确性）。
-Next steps: 真实文章端到端验证后在 README 补充样例截图；如需 PDF 导出，再评估是否加 rsvg-convert 栅格化路径。
+Task scope: F16 — 新增 /explain 命令（英文论文/网页 → 中文讲解稿）
+Current summary: 新增 3 个 Agent（article-translator / article-related-finder / article-explainer）+ 1 个 command（commands/explain.md），编排为单轮三种输入（URL / PDF / MD）→ 第一层 4 Agent 并行（translator + accuracy-checker + related-finder + visual-planner）→ diagram-renderer 落盘 → explainer 合成。工作目录 `.article-work-explain/` 与 `.article-work/` 隔离，避免与 /review /enhance 互踩。CLAUDE.md / README.md / feature_list.md 同步更新。
+Main gaps: 未做端到端真实运行验证（需要选一篇真实英文论文或博客触发 /explain 跑通全链路，重点验证：1) URL 输入下 WebFetch markdown 抽取质量，2) PDF 输入下 source/origin.md 路径迁移正确，3) diagram-renderer 落盘到 `.article-work-explain/img/`（注意：默认是 `.article-work/img/`，需要 prompt 显式覆盖），4) explainer 译注/图示/延伸阅读三段格式正确）。
+Next steps: 选取一篇英文论文做端到端 smoke test；如发现 diagram-renderer 不能从 prompt 中读取覆盖路径，再调整 renderer agent 让其支持显式参数，或在 explain.md 中改为手动从 04-visual.md 抽 SVG 写盘的 Bash 步骤。
