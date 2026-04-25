@@ -27,7 +27,7 @@
 ### 迭代改写与验证循环（1 个 Agent + 验证回路）
 - `article-rewriter` — opus, AskUserQuestion, 根据审查报告逐条修改
 - 每轮修改后重跑 content-reviewer + style-auditor + review-aggregator
-- 循环直到无 🔴 严重问题，最多 3 轮
+- 循环最多 2 轮（第 1 轮初稿，第 2 轮验证 + 必要时再补一次改写），N=2 后即使仍有 🔴 也强制退出，未解决问题在 `06-revision-notes.md` 标注
 - 每轮过程文件写入独立目录 `rewrite-round-N/`
 
 ## 命令

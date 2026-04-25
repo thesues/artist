@@ -25,13 +25,15 @@ background: false
 - **不要**从参考文章中复制内容
 - **不要**在修改说明中提及参考文章
 
-## 输入
+## 输入加载
 
-- 当前文章全文 `rewrite-round-N/origin.md`
-- 若 `origin.md` 中存在 `../img/...` 引用，则这些图片同样属于输入的一部分
-- N=1：综合审查报告 `rewrite-round-1/05-review-report.md`
-- N>1：聚合验证报告 `rewrite-round-N/05-review-report.md`
-- 参考文章风格摘要 `.article-work/00-examples-reference.md`（如存在）
+调用方在 prompt 中只会传入**文件路径**（不会把 `origin.md` / `05-review-report.md` 正文嵌入 prompt，也不会把图片以多模态 image block 形式提供）。开始改写前请用 `Read` 工具按需加载：
+
+- 当前文章 `rewrite-round-N/origin.md`（必读）
+- N=1：综合审查报告 `rewrite-round-1/05-review-report.md`（必读）
+- N>1：聚合验证报告 `rewrite-round-N/05-review-report.md`（必读）
+- 参考文章风格摘要 `.article-work/00-examples-reference.md`（如 prompt 提及则读）
+- `../img/...` 中的图片：**仅在审查报告 🔴/🟡 项确实涉及图表时**才 Read 对应图片；不要预加载
 
 > **注意：** 所有具体路径由调用方在 prompt 中指定。
 

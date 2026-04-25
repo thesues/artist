@@ -100,6 +100,18 @@
   - 实际生成的 `05-explanation.md` 中所有 `![](img/diagram_*.svg)` 可被 markdown 渲染器正常解析（不再 404）
 - passes: true
 
+## F19: 父协调层路径化输入 + /enhance loop 上限压到 2 轮
+- 目标：消除父协调层在构造并行 agent prompt 时持有多份"全文+图片"副本导致的 token 放大；同时把 /enhance 验证循环从最多 4 轮压到最多 2 轮，去掉收益递减的尾部循环
+- 验收：
+  - `commands/{review,enhance,explain}.md` 的 layer1 输入表全部改为"路径写法"（不再写"全文 + 图片"）
+  - `commands/{review,enhance,explain}.md` 显式声明"调用方不得把文件内容或图片嵌入 prompt"
+  - `commands/enhance.md` 验证循环阈值由 N<4 改为 N<2，文件清单移除 rewrite-round-3/4
+  - `agents/article-{accuracy-checker,content-reviewer,style-auditor,visual-planner,translator,related-finder,rewriter,explainer}.md` 全部从"图像输入"改为"输入加载"段，明确"调用方只传路径，agent 自行 Read，按需加载图片"
+  - `CLAUDE.md` / `README.md` 中"最多 3 轮"改为"最多 2 轮"
+  - grep `article-plugin/` 下不再出现"图像输入" / "多模态输入"等老措辞
+  - 端到端跑一篇带图论文（建议复用 latent_action 论文做回归），父对话 token 较旧版下降 ≥40%，产出无明显劣化
+- passes: false
+
 ## F18: PDF 提取图按 figure 合并，避免数百碎片
 - 目标：研究论文 figure 在 PDF 中常被切成几十个 image XObject（如 8x8 demo grid），原脚本逐 XObject 导出会让 `img/` 出现 800 个 fig_N 文件，origin.md 也被切成几十条 `![]()` 引用，下游 agent 无法识别"这是同一张 figure"。改成：用 pdfplumber 拿到每张 image 的页面坐标 → 同页按竖向间距聚类 → 对每个 cluster 的并集 bbox 调用 `page.crop(bbox).to_image(resolution=180)` 渲染为单张 PNG
 - 验收：

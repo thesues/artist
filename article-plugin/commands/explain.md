@@ -117,16 +117,18 @@ cp <input.md> .article-work-explain/source/origin.md
 
 ## 第一层 — 并行（4 个 Agent，单条消息同时启动）
 
-输入文件 `source/origin.md`，所有 Agent 共用。如果 `origin.md` 中存在 `../img/...` 引用，调用方必须把这些图片作为多模态输入一并传入。
+输入文件 `source/origin.md`，所有 Agent 共用。
+
+**调用约定（重要）**：每个 Agent 的 prompt 仅给出"输入文件路径 + 图片目录路径 + 输出文件路径"三类信息；不要把 `origin.md` 内容粘进 prompt，也不要把 `../img/*.png` 以多模态 image block 形式塞进 prompt。Agent 启动后用 `Read` 工具按需加载（图片仅在 visual-planner 等真正需要看图的 agent 里才 Read）。这样能避免父协调层在构造 4 份并行 prompt 时持有 4 份内容副本。
 
 | Agent | 输入 | 输出 |
 |-------|------|------|
-| 1 translator | `source/origin.md` 全文 + `../img/...` 图片 | `.article-work-explain/01-translation.md` |
-| 2 accuracy-checker | `source/origin.md` 全文 + `../img/...` 图片 | `.article-work-explain/02-accuracy.md` |
-| 3 related-finder | `source/origin.md` 全文 + `../img/...` 图片 | `.article-work-explain/03-related.md` |
-| 4 visual-planner | `source/origin.md` 全文 + `../img/...` 图片 | `.article-work-explain/04-visual.md` |
+| 1 translator | 路径：`.article-work-explain/source/origin.md`；图片目录：`.article-work-explain/img/`（按需 Read） | `.article-work-explain/01-translation.md` |
+| 2 accuracy-checker | 路径：`.article-work-explain/source/origin.md`；图片目录：`.article-work-explain/img/`（按需 Read） | `.article-work-explain/02-accuracy.md` |
+| 3 related-finder | 路径：`.article-work-explain/source/origin.md`；图片目录：`.article-work-explain/img/`（按需 Read） | `.article-work-explain/03-related.md` |
+| 4 visual-planner | 路径：`.article-work-explain/source/origin.md`；图片目录：`.article-work-explain/img/`（按需 Read） | `.article-work-explain/04-visual.md` |
 
-启动 Agent 时显式指定输入文件路径与输出文件路径。
+启动 Agent 时仅传入路径，不要把文件内容嵌入 prompt。
 
 ---
 
@@ -152,12 +154,12 @@ cp <input.md> .article-work-explain/source/origin.md
 
 | Agent | 输入 | 输出 |
 |-------|------|------|
-| 6 explainer | `01-translation.md` + `02-accuracy.md` + `03-related.md` + `04-visual.md` + `source/origin.md` + `img/diagram_N.svg` + `img/fig_N.png` | `.article-work-explain/05-explanation.md` |
+| 6 explainer | 路径列表：`01-translation.md` / `02-accuracy.md` / `03-related.md` / `04-visual.md` / `source/origin.md`；图片目录：`.article-work-explain/img/`（含 `diagram_N.svg` 与 `fig_N.png`，按需 Read） | `.article-work-explain/05-explanation.md` |
 
-启动 explainer 时 prompt 必须包含：
+启动 explainer 时 prompt 仅需包含（**不要嵌入任何文件正文**，由 explainer 自行 `Read`）：
 
-- 全部 6 类输入文件的完整路径
-- `img/` 目录下所有 `diagram_N.svg` 文件清单与对应的 `04-visual.md` 中"建议插入位置"
+- 上述 5 个 markdown 文件的完整路径，以及图片目录路径
+- `img/` 目录下 `diagram_N.svg` 文件清单（用 `ls` 取一次即可），与 `04-visual.md` 中对应的"建议插入位置"条目
 - 明确指令：图示以 `![图示标题](img/diagram_N.svg)` 插入；最终输出写到 `.article-work-explain/05-explanation.md`
   - **路径说明**：`05-explanation.md` 与 `img/` 同级位于 `.article-work-explain/` 根目录，因此用 `img/diagram_N.svg`（相对路径，不带 `../`）。`source/origin.md` 中的 `../img/...` 引用是相对 `source/` 子目录，不要照搬到 `05-explanation.md`。
 - 若 `origin.md` 中带有 `../img/fig_N.png`（PDF 渲染或本地图片），写入 `05-explanation.md` 时同样改写为 `img/fig_N.png`

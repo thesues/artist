@@ -37,7 +37,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 - 每张 figure 对应 markdown 图片引用 `![fig_N](../img/fig_N.png)`
 - 所有图片引用统一使用 `../img/...`
 
-后续调用各个第一层 Agent 时，如果 `origin.md` 中存在 `../img/...` 引用，调用方必须把这些图片作为多模态输入一并传入。
+后续调用各个第一层 Agent 时，**只在 prompt 中传入文件路径**（`origin.md` 与图片目录），由 agent 自行 `Read` 文件内容；调用方不要把 `origin.md` 全文或图片以多模态形式嵌入 prompt（否则父协调层会持有多份副本，token 急剧放大）。
 
 ---
 
@@ -65,13 +65,15 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 
 如果 `codex` CLI 不可用（`which codex` 失败），不启动 2-codex。
 
+**调用约定（重要）**：每个 Agent 的 prompt 仅给出"输入文件路径 + 图片目录路径 + 输出文件路径"三类信息；不要把 `origin.md` 内容粘进 prompt，也不要把 `../img/*.png` 以多模态 image block 形式塞进 prompt。Agent 启动后用 `Read` 工具按需加载。
+
 | Agent | 输入 | 输出 |
 |-------|------|------|
-| 1 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/01-accuracy.md` |
-| 2 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/02-content.md` |
-| 2-codex | `rewrite-round-1/origin.md` 全文 + 文件路径 + 输出路径 | `.article-work/rewrite-round-1/02-content-codex.md` |
-| 3 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/03-style.md` |
-| 4 | `rewrite-round-1/origin.md` 全文 + `../img/...` 图片（如存在） | `.article-work/rewrite-round-1/04-visual.md` |
+| 1 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read 对应 `fig_N.png`） | `.article-work/rewrite-round-1/01-accuracy.md` |
+| 2 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read） | `.article-work/rewrite-round-1/02-content.md` |
+| 2-codex | 路径：`.article-work/rewrite-round-1/origin.md`；输出路径作为 `--output-file` 传入 codex-task.mjs | `.article-work/rewrite-round-1/02-content-codex.md` |
+| 3 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read） | `.article-work/rewrite-round-1/03-style.md` |
+| 4 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read） | `.article-work/rewrite-round-1/04-visual.md` |
 
 ---
 

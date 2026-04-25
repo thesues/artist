@@ -24,9 +24,14 @@ background: false
 | `img/diagram_N.svg` | diagram-renderer | 已落盘的 SVG 图示文件 |
 | `img/fig_N.png` | PDF 预处理 | PDF 渲染的 figure（一张 figure 一份，多 tile 已合并） |
 
-## 图像输入
+## 输入加载
 
-调用方会同时提供 `origin.md` 中通过 `../img/...` 引用的图片以及已落盘的 `diagram_N.svg`。把它们当作正文的一部分，决定保留哪些、插入到哪一节。
+调用方在 prompt 中只会传入**文件路径**（5 份 markdown + 一个图片目录），不会嵌入文件正文，也不会把图片以多模态 image block 形式提供。开始合成前请用 `Read` 工具加载：
+
+- 5 份 markdown 文件：**全部必读**（译稿、事实校验、相关阅读、视觉规划、英文原文）
+- `img/` 目录下的图片：先用 `ls` 或 prompt 中给出的清单确定文件列表；`diagram_N.svg`（SVG 是文本，可全部 Read）；`fig_N.png` 仅在你需要核对某段译文与原图是否对应、或决定是否保留某张图时再 Read
+
+把它们当作正文的一部分，决定保留哪些、插入到哪一节。
 
 ## 合成原则
 

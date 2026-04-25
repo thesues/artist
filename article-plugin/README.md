@@ -70,7 +70,7 @@ claude plugins update article@article
 迭代改写
 └── article-rewriter                 opus    根据报告逐条修改 + 用户交互
     └── 每轮修改后重跑 content-reviewer + style-auditor + aggregator
-    └── 循环直到无 🔴 严重问题，最多 3 轮
+    └── 循环最多 2 轮（第 1 轮初稿，第 2 轮验证 + 必要时再补改一次），N=2 后强制退出
 ```
 
 ### /explain（英文论文/网页中文讲解）
