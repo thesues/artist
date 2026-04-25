@@ -29,12 +29,12 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 固定生成：
 
 - `.article-work/origin.pdf`
-- `.article-work/img/fig_N.{jpg,png}`（从 PDF 中提取的嵌入图片）
+- `.article-work/img/fig_N.png`（从 PDF 渲染的 figure，一张 figure 一份；多 tile 自动合并）
 - `.article-work/rewrite-round-1/origin.md`
 
 `rewrite-round-1/origin.md` 必须满足：
 
-- 每张嵌入图片对应 markdown 图片引用 `![fig_N](../img/fig_N.ext)`
+- 每张 figure 对应 markdown 图片引用 `![fig_N](../img/fig_N.png)`
 - 所有图片引用统一使用 `../img/...`
 
 后续调用各个第一层 Agent 时，如果 `origin.md` 中存在 `../img/...` 引用，调用方必须把这些图片作为多模态输入一并传入。

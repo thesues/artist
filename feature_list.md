@@ -99,3 +99,12 @@
   - `commands/explain.md` 第二层 explainer 调用指令同步更正
   - 实际生成的 `05-explanation.md` 中所有 `![](img/diagram_*.svg)` 可被 markdown 渲染器正常解析（不再 404）
 - passes: true
+
+## F18: PDF 提取图按 figure 合并，避免数百碎片
+- 目标：研究论文 figure 在 PDF 中常被切成几十个 image XObject（如 8x8 demo grid），原脚本逐 XObject 导出会让 `img/` 出现 800 个 fig_N 文件，origin.md 也被切成几十条 `![]()` 引用，下游 agent 无法识别"这是同一张 figure"。改成：用 pdfplumber 拿到每张 image 的页面坐标 → 同页按竖向间距聚类 → 对每个 cluster 的并集 bbox 调用 `page.crop(bbox).to_image(resolution=180)` 渲染为单张 PNG
+- 验收：
+  - `skills/pdf/scripts/prepare_article_pdf.py` 不再逐 XObject 写文件；改为聚类 + 渲染 PNG
+  - 对 latent_action 论文（28 页，799 个 image XObject）输出仅 21 张 `fig_N.png`；Figure 4（64 tile）合并为 1 张；page 20 的 Figure 10 + Figure 11 自动拆成 2 张
+  - 渲染图肉眼可读，DPI 180 下大小适中（数百 KB / 张）
+  - 文档同步更新：`skills/pdf/SKILL.md`、`CLAUDE.md`、`README.md`、`commands/{review,enhance,explain}.md`、`agents/article-explainer.md` 中的 `fig_N.{jpg,png}` 改为 `fig_N.png` 并解释合并逻辑
+- passes: true

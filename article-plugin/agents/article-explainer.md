@@ -22,7 +22,7 @@ background: false
 | `04-visual.md` | visual-planner | SVG 图示规划 + 源码 |
 | `source/origin.md` | 预处理 | 英文原文（用于核对） |
 | `img/diagram_N.svg` | diagram-renderer | 已落盘的 SVG 图示文件 |
-| `img/fig_N.{jpg,png}` | PDF 预处理 | PDF 提取的原始图片 |
+| `img/fig_N.png` | PDF 预处理 | PDF 渲染的 figure（一张 figure 一份，多 tile 已合并） |
 
 ## 图像输入
 
@@ -50,7 +50,7 @@ background: false
 - 插入格式：`![图示标题](img/diagram_N.svg)`
   - **注意路径**：`05-explanation.md` 输出在 `.article-work-explain/` 根目录，与 `img/` 同级，因此使用 `img/diagram_N.svg`（不要写成 `../img/...`，那是相对 `source/origin.md` 的路径）
 - 紧跟一句"图 N：..."的简短说明（用译注块或正文均可）
-- PDF 提取的 `fig_N.*` 引用：原 `origin.md` 中是 `../img/fig_N.*`（相对 `source/`），写入 `05-explanation.md` 时需改写为 `img/fig_N.*`（相对工作目录根）
+- PDF 渲染的 `fig_N.png` 引用：原 `origin.md` 中是 `../img/fig_N.png`（相对 `source/`），写入 `05-explanation.md` 时需改写为 `img/fig_N.png`（相对工作目录根）
 
 ### 五、相关阅读
 - 在文末新增 `## 延伸阅读` 一节，整理 related-finder 的清单

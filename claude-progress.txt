@@ -1,6 +1,6 @@
 Date: 2026-04-24
 TaskStatus: completed
-Task scope: F17 — 修复 /explain 输出 05-explanation.md 中的图片相对路径错误（../img/ → img/）
-Current summary: 用户在 /Users/dongmao.zhang/upstream/llmwiki 下用 /explain 跑了一遍，发现 `.article-work-explain/05-explanation.md` 里 4 张 SVG 图示都引用为 `../img/diagram_N.svg`，但 `05-explanation.md` 本身就在 `.article-work-explain/` 根目录、与 `img/` 同级，`../img/...` 会越过工作目录解析到 `llmwiki/img/`，渲染时 404。根因：`source/origin.md` 在 `source/` 子目录里，那里 `../img/...` 是正确的；但 `article-explainer` 与 `commands/explain.md` 把这个写法照搬到 `05-explanation.md` 上就错位了。本次：1) 直接 sed 修复用户已生成的 05-explanation.md；2) 修 `agents/article-explainer.md` 的图示集成规则与 PDF 提取图片的路径改写说明；3) 修 `commands/explain.md` 第二层 explainer 调用指令并加上路径解释。
-Main gaps: 仍未做端到端 smoke test；本次只验证了"手动 sed 替换后路径正确"，没有重新跑一遍 /explain 验证 explainer 现在真的会按新规则写。
-Next steps: 下一次有英文论文/博客触发 /explain 时，作为回归用例验证 explainer 写出的 05-explanation.md 直接采用 `img/...`、无需手动 sed。
+Task scope: F18 — 修复 PDF 提取图过多碎片：按页内竖向聚类，渲染为单张 PNG
+Current summary: 用户在 /Users/dongmao.zhang/upstream/latent_action 跑 /explain 时发现 .article-work-explain/img/ 下出现 799 个 fig_*.{jpg,png}，每个研究论文 figure（如 Figure 4 的 8x8 demo grid）被切成 64 个独立 XObject 导出。下游 explainer 看到几十条 `![]()` 引用根本无法识别为同一张图。修法：换用 pdfplumber 拿到每张 image 的 (x0, top, x1, bottom) 坐标 → 同页按竖向间距 (gap_threshold=18pt) 聚类 → 对每个 cluster 的并集 bbox 调用 `page.crop(bbox).to_image(resolution=180)` 渲染为单张 PNG。脚本输入输出契约不变（origin.pdf + img/ + rewrite-round-1/origin.md），但 img/ 文件名统一为 fig_N.png。已对真实 PDF 端到端验证：799 → 21 张 PNG，page 20 的 Figure 10 + Figure 11 正确拆成两张，Figure 4 64 tile 合并为单张且肉眼可读。同步更新 SKILL.md / CLAUDE.md / README.md / 三个 commands / explainer agent 的扩展名说明。
+Main gaps: 用户已生成的 latent_action/.article-work-explain/ 仍是旧 799-fig 结构；需要 user 重跑 /explain 触发新脚本（或手动 rm -rf img/ 并重跑 prepare_article_pdf.py）。本次未自动重跑因为不确定用户是否在意旧译稿。
+Next steps: 下次有 PDF 论文触发 /explain 时作为回归用例验证：img/ 应只出现少量 fig_N.png（数十张），origin.md 中每个 figure 对应一条 `![fig_N](../img/fig_N.png)`。

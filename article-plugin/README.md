@@ -143,7 +143,7 @@ claude plugins update article@article
 .article-work/
   origin.pdf                 PDF 原件（仅 PDF 输入）
   img/                       图片目录
-    fig_N.{jpg,png}          PDF 提取图
+    fig_N.png                PDF 渲染图（一张 figure 一份；多 tile 自动合并）
     diagram_N.svg            SVG 图示（visual-planner 生成 + renderer 落盘）
   rewrite-round-1/           第1轮
     origin.md                输入文章
@@ -167,7 +167,7 @@ claude plugins update article@article
     origin.pdf               PDF 输入时保留
     origin.url               URL 输入时保留
   img/
-    fig_N.{jpg,png}          PDF 提取图
+    fig_N.png                PDF 渲染图（一张 figure 一份；多 tile 自动合并）
     diagram_N.svg            visual-planner 生成、renderer 落盘
   01-translation.md          中文译稿 + 术语对照表
   02-accuracy.md             事实/引用/术语审查

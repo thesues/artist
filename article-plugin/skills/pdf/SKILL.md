@@ -12,14 +12,16 @@ For article review/enhance flows, use the existing scripts in `scripts/` rather 
 - `python scripts/prepare_article_pdf.py <input.pdf> <work_dir>`
 - Output contract:
   - `<work_dir>/origin.pdf`
-  - `<work_dir>/img/fig_N.{jpg,png}` (embedded images extracted from the PDF)
+  - `<work_dir>/img/fig_N.png` (one PNG per figure, rendered from the PDF)
   - `<work_dir>/rewrite-round-1/origin.md`
 
 `rewrite-round-1/origin.md` will contain:
 
-- `![fig_N](../img/fig_N.ext)` for each embedded image
+- `![fig_N](../img/fig_N.png)` for each rendered figure
 
-Those image references are intended to stay stable across later rewrite rounds, so downstream agents should preserve `../img/...` paths rather than copying images into each round directory.
+The script does **not** export each embedded image XObject as a separate file. Research-paper figures (e.g. an 8x8 grid of demo frames) are encoded as many small JPEG XObjects in the PDF, and exporting them 1:1 would produce hundreds of fragments. Instead, image rects on the same page are clustered by vertical proximity and each cluster's union bbox is rendered to a single PNG via `pdfplumber.Page.crop().to_image(resolution=180)`. So a page containing two figures (e.g. Figure 10 and Figure 11) yields exactly two `fig_*.png`, not 50+ tiles.
+
+Image references are intended to stay stable across later rewrite rounds, so downstream agents should preserve `../img/...` paths rather than copying images into each round directory.
 
 ## Quick Start
 

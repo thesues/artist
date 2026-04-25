@@ -51,8 +51,9 @@
 
 ## PDF 输入
 - `.pdf` 输入先预处理为 `origin.pdf + img/ + rewrite-round-1/origin.md`
-- 从 PDF 提取嵌入图片，保存为 `img/fig_N.{jpg,png}`
-- `rewrite-round-1/origin.md` 中图片以 `![fig_N](../img/fig_N.ext)` 引用
+- 论文 figure 在 PDF 中往往被切成几十个小 image XObject（例如 8x8 的 demo grid），脚本不会逐 XObject 导出；改用 pdfplumber 拿到每张 image 的页面坐标，按竖向间距聚类后对每个 cluster 的并集 bbox 渲染为单张 PNG（DPI=180）。一页两个 figure 自然拆成两张 PNG，避免 `img/` 出现数百个碎片。
+- 输出文件统一为 `img/fig_N.png`
+- `rewrite-round-1/origin.md` 中图片以 `![fig_N](../img/fig_N.png)` 引用
 
 ## Codex 集成
 - `scripts/codex-task.mjs` — 精简版 Codex 运行时

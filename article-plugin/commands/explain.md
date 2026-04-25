@@ -77,7 +77,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<input
 脚本会生成：
 
 - `.article-work-explain/origin.pdf`
-- `.article-work-explain/img/fig_N.{jpg,png}`
+- `.article-work-explain/img/fig_N.png`（从 PDF 渲染的 figure，一张 figure 一份；多 tile 自动合并）
 - `.article-work-explain/rewrite-round-1/origin.md`（脚本既定输出位置）
 
 预处理后立刻执行：
@@ -152,7 +152,7 @@ cp <input.md> .article-work-explain/source/origin.md
 
 | Agent | 输入 | 输出 |
 |-------|------|------|
-| 6 explainer | `01-translation.md` + `02-accuracy.md` + `03-related.md` + `04-visual.md` + `source/origin.md` + `img/diagram_N.svg` + `img/fig_N.*` | `.article-work-explain/05-explanation.md` |
+| 6 explainer | `01-translation.md` + `02-accuracy.md` + `03-related.md` + `04-visual.md` + `source/origin.md` + `img/diagram_N.svg` + `img/fig_N.png` | `.article-work-explain/05-explanation.md` |
 
 启动 explainer 时 prompt 必须包含：
 
@@ -160,7 +160,7 @@ cp <input.md> .article-work-explain/source/origin.md
 - `img/` 目录下所有 `diagram_N.svg` 文件清单与对应的 `04-visual.md` 中"建议插入位置"
 - 明确指令：图示以 `![图示标题](img/diagram_N.svg)` 插入；最终输出写到 `.article-work-explain/05-explanation.md`
   - **路径说明**：`05-explanation.md` 与 `img/` 同级位于 `.article-work-explain/` 根目录，因此用 `img/diagram_N.svg`（相对路径，不带 `../`）。`source/origin.md` 中的 `../img/...` 引用是相对 `source/` 子目录，不要照搬到 `05-explanation.md`。
-- 若 `origin.md` 中带有 `../img/fig_N.*`（PDF 提取或本地图片），写入 `05-explanation.md` 时同样改写为 `img/fig_N.*`
+- 若 `origin.md` 中带有 `../img/fig_N.png`（PDF 渲染或本地图片），写入 `05-explanation.md` 时同样改写为 `img/fig_N.png`
 
 **explainer 单次运行成稿，不做多轮迭代。**
 
@@ -185,7 +185,7 @@ cp <input.md> .article-work-explain/source/origin.md
     origin.pdf            PDF 输入时保留
     origin.url            URL 输入时保留
   img/
-    fig_N.{jpg,png}       PDF 提取图（仅 PDF 输入）
+    fig_N.png             PDF 渲染图（一张 figure 一份；仅 PDF 输入）
     diagram_N.svg         visual-planner 生成的图示
   01-translation.md       中文译稿 + 术语表
   02-accuracy.md          事实/引用/术语审查
