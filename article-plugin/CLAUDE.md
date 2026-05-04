@@ -6,11 +6,14 @@
 ## 架构
 两层 Agent 工作流 + 图示渲染 + 迭代改写：
 
-### 第一层：并行分析（最多 5 个 Agent）
+### 第一层：并行分析（最多 8 个 Agent）
 - `article-accuracy-checker` — opus, WebSearch, 事实验证+引用查找+术语检查
+- `article-accuracy-checker-hermes` — haiku+hermes, 准确性审查的 Hermes 多样性视角（可选，需 hermes CLI；不联网，仅训练知识标注怀疑）
 - `article-content-reviewer` — opus, 技术深度+论证逻辑+章节结构
 - `article-content-reviewer-codex` — haiku+codex, 内容审查的 Codex 多样性视角（可选，需 codex CLI）
+- `article-content-reviewer-hermes` — haiku+hermes, 内容审查的 Hermes 多样性视角（可选，需 hermes CLI）
 - `article-style-auditor` — opus, 去 AI 味核心 Agent，检测模板化表达
+- `article-style-auditor-hermes` — haiku+hermes, 风格审计的 Hermes 多样性视角（可选，需 hermes CLI）
 - `article-visual-planner` — sonnet, WebSearch, 规划图示、截取参考图
 
 ### /explain 专用 Agent
@@ -19,7 +22,7 @@
 - `article-explainer` — opus, 合成讲解稿（译文 + 译注 + 图示 + 延伸阅读），单轮成稿
 
 ### 第二层：聚合（1 个 Agent）
-- `article-review-aggregator` — opus, 汇总全部报告，交叉验证（含 Codex 视角），生成统一审查报告
+- `article-review-aggregator` — opus, 汇总全部报告，三方交叉验证（Claude × Codex × Hermes），生成统一审查报告
 
 ### 图示渲染（1 个 Agent，必须在改写前完成）
 - `article-diagram-renderer` — sonnet, Read/Write/Grep/Glob/Bash, 从 visual-planner 报告抽取 ```svg 代码块并落盘为 `.svg` 文件，供 rewriter 插入文章
@@ -43,11 +46,11 @@
 - `/review` 和 `/enhance`：所有中间状态写入 `.article-work/` 目录
   - PDF 输入时，`.article-work/origin.pdf` 保留原始文件，`.article-work/img/` 保留提取图片
   - 各轮次文件在 `.article-work/rewrite-round-N/`
-  - 文件命名约定：01-accuracy, 02-content, 02-content-codex, 03-style, 04-visual, 05-review-report, 06-revised-origin, 06-revision-notes
+  - 文件命名约定：01-accuracy, 01-accuracy-hermes, 02-content, 02-content-codex, 02-content-hermes, 03-style, 03-style-hermes, 04-visual, 05-review-report, 06-revised-origin, 06-revision-notes（带 `-hermes` 后缀的均为可选输出）
 - `/explain`：所有中间状态写入 `.article-work-explain/` 目录（独立于上者）
   - 输入统一为 `source/origin.md`（PDF 时同时保留 `source/origin.pdf`、URL 时同时保留 `source/origin.url`）
   - 图片在 `img/`（fig_N.* + diagram_N.svg）
-  - 文件命名约定：01-translation, 02-accuracy, 03-related, 04-visual, 05-explanation
+  - 文件命名约定：01-translation, 02-accuracy, 02-accuracy-hermes（可选）, 03-related, 04-visual, 05-explanation
 
 ## PDF 输入
 - `.pdf` 输入先预处理为 `origin.pdf + img/ + rewrite-round-1/origin.md`
@@ -56,9 +59,17 @@
 - `rewrite-round-1/origin.md` 中图片以 `![fig_N](../img/fig_N.png)` 引用
 
 ## Codex 集成
-- `scripts/codex-task.mjs` — 精简版 Codex 运行时
+- `scripts/codex-task.mjs` — 精简版 Codex 运行时（`codex app-server` JSON-RPC）
 - Codex agent 是 haiku 转发器：读文章 → 组装 prompt → 调用 codex-task.mjs → 写入结果
-- 需要 `codex` CLI 已安装，不可用时自动跳过
+- 需要 `codex` CLI 已安装且 `codex login status` 显示已登录，不可用时自动跳过
+
+## Hermes 集成
+- `scripts/hermes-task.mjs` — 精简版 Hermes Agent 运行时（`hermes chat -q ... -Q`）；支持 `--check` 冒烟测试（exit 0/1）
+- Hermes agent 是 haiku 转发器，与 Codex agent 同形：读文章 → 组装 prompt → 调用 hermes-task.mjs → 写入结果
+- 三个 Hermes agent 共用同一脚本，prompt 文件分别命名为 `.hermes-prompt-{content,style,accuracy}.md`
+- 需要 `hermes` CLI 已安装且冒烟测试通过：先 `which hermes`，再运行 `node hermes-task.mjs --check`（30s 超时验证实际可响应）；任一失败则自动跳过整套 Hermes
+- Hermes 不接收图片输入；模型/Provider 由用户的 `hermes model` 全局配置决定，插件不指定
+- 价值：在 Claude+Codex 之外提供第三方模型视角，聚合 Agent 做 3-way 交叉验证（≥2 路一致 → 高置信；2-of-3 多数 → 采纳多数；孤立观点 → 待复核）
 
 ## Skills
 - `article-examples` — 参考文章库（examples/ 目录）

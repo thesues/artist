@@ -46,9 +46,12 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 | 编号 | Agent | 文件 | 模型 | 工具 |
 |------|-------|------|------|------|
 | 1 | 准确性审查 | `agents/article-accuracy-checker.md` | opus | WebSearch |
+| 1-hermes | 准确性审查（Hermes） | `agents/article-accuracy-checker-hermes.md` | haiku+hermes | Bash |
 | 2 | 内容审查 | `agents/article-content-reviewer.md` | opus | — |
 | 2-codex | 内容审查（Codex） | `agents/article-content-reviewer-codex.md` | haiku+codex | Bash |
+| 2-hermes | 内容审查（Hermes） | `agents/article-content-reviewer-hermes.md` | haiku+hermes | Bash |
 | 3 | 风格审计 | `agents/article-style-auditor.md` | opus | — |
+| 3-hermes | 风格审计（Hermes） | `agents/article-style-auditor-hermes.md` | haiku+hermes | Bash |
 | 4 | 视觉规划 | `agents/article-visual-planner.md` | sonnet | WebSearch |
 | 5 | 审查聚合 | `agents/article-review-aggregator.md` | opus | — |
 
@@ -61,18 +64,23 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 - 若 `<origin>` 为 `.md`：创建 `.article-work/rewrite-round-1/` 目录，将原始文件拷贝为 `.article-work/rewrite-round-1/origin.md`
 - 若 `<origin>` 为 `.pdf`：运行 PDF 预处理
 
-在**单条消息中**同时启动 Agent 1/2/2-codex/3/4（并行），使用 `mode: "auto"`。
+在**单条消息中**同时启动 Agent 1/1-hermes/2/2-codex/2-hermes/3/3-hermes/4（并行），使用 `mode: "auto"`。
 
-如果 `codex` CLI 不可用（`which codex` 失败），不启动 2-codex。
+**可用性检查（启动 Agent 前）：**
+- 如果 `codex` CLI 不可用（`which codex` 失败），不启动 2-codex
+- 如果 `hermes` CLI 不可用，统一跳过 1-hermes / 2-hermes / 3-hermes：依次检查 `which hermes`，通过后再运行 `node "${CLAUDE_PLUGIN_ROOT}/scripts/hermes-task.mjs" --check`（30s 冒烟测试），任一失败则跳过
 
-**调用约定（重要）**：每个 Agent 的 prompt 仅给出"输入文件路径 + 图片目录路径 + 输出文件路径"三类信息；不要把 `origin.md` 内容粘进 prompt，也不要把 `../img/*.png` 以多模态 image block 形式塞进 prompt。Agent 启动后用 `Read` 工具按需加载。
+**调用约定（重要）**：每个 Agent 的 prompt 仅给出"输入文件路径 + 图片目录路径 + 输出文件路径"三类信息；不要把 `origin.md` 内容粘进 prompt，也不要把 `../img/*.png` 以多模态 image block 形式塞进 prompt。Agent 启动后用 `Read` 工具按需加载。Hermes 子代理不接收图片输入，文章中的 `../img/...` 引用以文本形式保留进入 prompt 即可。
 
 | Agent | 输入 | 输出 |
 |-------|------|------|
 | 1 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read 对应 `fig_N.png`） | `.article-work/rewrite-round-1/01-accuracy.md` |
+| 1-hermes | 路径：`.article-work/rewrite-round-1/origin.md`；输出路径作为 `--output-file` 传入 hermes-task.mjs | `.article-work/rewrite-round-1/01-accuracy-hermes.md` |
 | 2 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read） | `.article-work/rewrite-round-1/02-content.md` |
 | 2-codex | 路径：`.article-work/rewrite-round-1/origin.md`；输出路径作为 `--output-file` 传入 codex-task.mjs | `.article-work/rewrite-round-1/02-content-codex.md` |
+| 2-hermes | 路径：`.article-work/rewrite-round-1/origin.md`；输出路径作为 `--output-file` 传入 hermes-task.mjs | `.article-work/rewrite-round-1/02-content-hermes.md` |
 | 3 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read） | `.article-work/rewrite-round-1/03-style.md` |
+| 3-hermes | 路径：`.article-work/rewrite-round-1/origin.md`；输出路径作为 `--output-file` 传入 hermes-task.mjs | `.article-work/rewrite-round-1/03-style-hermes.md` |
 | 4 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read） | `.article-work/rewrite-round-1/04-visual.md` |
 
 ---
@@ -81,7 +89,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 
 | Agent | 输入 | 输出 |
 |-------|------|------|
-| 5 | `01-accuracy.md` + `02-content.md` + `02-content-codex.md`（如存在） + `03-style.md` + `04-visual.md` | `.article-work/rewrite-round-1/05-review-report.md` |
+| 5 | `01-accuracy.md` + `01-accuracy-hermes.md`（如存在） + `02-content.md` + `02-content-codex.md`（如存在） + `02-content-hermes.md`（如存在） + `03-style.md` + `03-style-hermes.md`（如存在） + `04-visual.md` | `.article-work/rewrite-round-1/05-review-report.md` |
 
 ---
 

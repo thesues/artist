@@ -58,9 +58,12 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 | 编号 | Agent | 文件 | 模型 | 工具 |
 |------|-------|------|------|------|
 | 1 | 准确性审查 | `agents/article-accuracy-checker.md` | opus | WebSearch |
+| 1-hermes | 准确性审查（Hermes） | `agents/article-accuracy-checker-hermes.md` | haiku+hermes | Bash |
 | 2 | 内容审查 | `agents/article-content-reviewer.md` | opus | — |
 | 2-codex | 内容审查（Codex） | `agents/article-content-reviewer-codex.md` | haiku+codex | Bash |
+| 2-hermes | 内容审查（Hermes） | `agents/article-content-reviewer-hermes.md` | haiku+hermes | Bash |
 | 3 | 风格审计 | `agents/article-style-auditor.md` | opus | — |
+| 3-hermes | 风格审计（Hermes） | `agents/article-style-auditor-hermes.md` | haiku+hermes | Bash |
 | 4 | 视觉规划 | `agents/article-visual-planner.md` | sonnet | WebSearch |
 | 5 | 审查聚合 | `agents/article-review-aggregator.md` | opus | — |
 | 6 | 图示落盘 | `agents/article-diagram-renderer.md` | sonnet | Read, Write, Grep, Glob, Bash |
@@ -68,27 +71,34 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 
 ---
 
-## 第一层 — 并行审查（最多 5 个 Agent 同时启动）
+## 第一层 — 并行审查（最多 8 个 Agent 同时启动）
 
 **准备工作（启动 Agent 前）：**
 
 - 若 `<origin>` 为 `.md`：创建 `.article-work/rewrite-round-1/` 目录，将原始文件拷贝为 `.article-work/rewrite-round-1/origin.md`
 - 若 `<origin>` 为 `.pdf`：运行 PDF 预处理
 
-在**单条消息中**同时启动 Agent 1/2/2-codex/3/4（并行），使用 `mode: "auto"`。
+在**单条消息中**同时启动 Agent 1/1-hermes/2/2-codex/2-hermes/3/3-hermes/4（并行），使用 `mode: "auto"`。
 
 **Codex 可用性检查（启动 Agent 前执行）：** 依次运行以下两个命令，任一失败则跳过 2-codex：
 1. `which codex` — 检查 codex CLI 是否安装
 2. `codex login status` — 检查是否已登录（输出 "Logged in" 表示可用）
 
-**调用约定（重要）**：每个 Agent 的 prompt 仅给出"输入文件路径 + 图片目录路径 + 输出文件路径"三类信息；不要把 `origin.md` 内容粘进 prompt，也不要把 `../img/*.png` 以多模态 image block 形式塞进 prompt。Agent 启动后用 `Read` 工具按需加载（图片仅在 visual-planner 等真正需要看图的 agent 里才 Read）。这样能避免父协调层在构造 5 份并行 prompt 时持有 5 份内容副本。
+**Hermes 可用性检查（启动 Agent 前执行）：** 依次运行以下两个命令，任一失败则统一跳过 1-hermes / 2-hermes / 3-hermes：
+1. `which hermes` — 检查 hermes CLI 是否安装
+2. `node "${CLAUDE_PLUGIN_ROOT}/scripts/hermes-task.mjs" --check` — 冒烟测试，验证 hermes 实际可响应（30s 超时；失败时跳过，不阻塞主流程）
+
+**调用约定（重要）**：每个 Agent 的 prompt 仅给出"输入文件路径 + 图片目录路径 + 输出文件路径"三类信息；不要把 `origin.md` 内容粘进 prompt，也不要把 `../img/*.png` 以多模态 image block 形式塞进 prompt。Agent 启动后用 `Read` 工具按需加载（图片仅在 visual-planner 等真正需要看图的 agent 里才 Read）。这样能避免父协调层在构造并行 prompt 时持有多份内容副本。Hermes 系子代理不接收图片，文章中的 `../img/...` 引用以文本形式保留即可。
 
 | Agent | 输入 | 输出 |
 |-------|------|------|
 | 1 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read） | `.article-work/rewrite-round-1/01-accuracy.md` |
+| 1-hermes | 路径：`.article-work/rewrite-round-1/origin.md`；输出路径作为 `--output-file` 传入 hermes-task.mjs | `.article-work/rewrite-round-1/01-accuracy-hermes.md` |
 | 2 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read） | `.article-work/rewrite-round-1/02-content.md` |
 | 2-codex | 路径：`.article-work/rewrite-round-1/origin.md`；输出路径作为 `--output-file` 传入 codex-task.mjs | `.article-work/rewrite-round-1/02-content-codex.md` |
+| 2-hermes | 路径：`.article-work/rewrite-round-1/origin.md`；输出路径作为 `--output-file` 传入 hermes-task.mjs | `.article-work/rewrite-round-1/02-content-hermes.md` |
 | 3 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read） | `.article-work/rewrite-round-1/03-style.md` |
+| 3-hermes | 路径：`.article-work/rewrite-round-1/origin.md`；输出路径作为 `--output-file` 传入 hermes-task.mjs | `.article-work/rewrite-round-1/03-style-hermes.md` |
 | 4 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read） | `.article-work/rewrite-round-1/04-visual.md` |
 
 ---
@@ -97,7 +107,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 
 | Agent | 输入 | 输出 |
 |-------|------|------|
-| 5 | `01-accuracy.md` + `02-content.md` + `02-content-codex.md`（如存在） + `03-style.md` + `04-visual.md` | `.article-work/rewrite-round-1/05-review-report.md` |
+| 5 | `01-accuracy.md` + `01-accuracy-hermes.md`（如存在） + `02-content.md` + `02-content-codex.md`（如存在） + `02-content-hermes.md`（如存在） + `03-style.md` + `03-style-hermes.md`（如存在） + `04-visual.md` | `.article-work/rewrite-round-1/05-review-report.md` |
 
 ---
 
@@ -126,7 +136,7 @@ Agent 7 接收 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md +
 ┌─→ 准备：拷贝 rewrite-round-1/06-revised-origin.md → rewrite-round-2/origin.md
 │         │
 │         ▼
-│   Agent 2/3 并行验证 rewrite-round-2/origin.md（仅传路径）
+│   Agent 2/3（+ 可选 2-hermes/3-hermes）并行验证 rewrite-round-2/origin.md（仅传路径）
 │         │
 │         ▼
 │   Agent 5 聚合 → rewrite-round-2/05-review-report.md
@@ -157,11 +167,13 @@ Agent 7 接收 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md +
 
 **准备：** 创建 `rewrite-round-2/` 目录，拷贝 `rewrite-round-1/06-revised-origin.md` → `rewrite-round-2/origin.md`。
 
-**验证：** 并行启动 Agent 2/3，prompt 仅传路径（输入 `.article-work/rewrite-round-2/origin.md`、图片目录 `.article-work/img/`、按需 Read），输出到：
+**验证：** 并行启动 Agent 2/3（如 Hermes 可用，再加 2-hermes/3-hermes），prompt 仅传路径（输入 `.article-work/rewrite-round-2/origin.md`、图片目录 `.article-work/img/`、按需 Read），输出到：
 - `rewrite-round-2/02-content.md`
+- `rewrite-round-2/02-content-hermes.md`（如启用）
 - `rewrite-round-2/03-style.md`
+- `rewrite-round-2/03-style-hermes.md`（如启用）
 
-等待完成后启动 Agent 5 聚合（输入路径同上 + 两份验证报告），输出到 `rewrite-round-2/05-review-report.md`。
+等待完成后启动 Agent 5 聚合（输入路径同上 + 全部验证报告），输出到 `rewrite-round-2/05-review-report.md`。
 
 **判断退出条件：**
 
@@ -193,12 +205,18 @@ Agent 7 接收 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md +
     diagram_1.svg            SVG 图示（visual-planner 生成、renderer 落盘）
   00-examples-reference.md   参考文章风格摘要（如有参考文章库）
   .codex-prompt-content.md   Codex prompt 临时文件
+  .hermes-prompt-content.md  Hermes 内容审查 prompt 临时文件
+  .hermes-prompt-style.md    Hermes 风格审计 prompt 临时文件
+  .hermes-prompt-accuracy.md Hermes 准确性审查 prompt 临时文件
   rewrite-round-1/           第1轮（初始审查 + 首次改写）
     origin.md                第一层统一输入
     01-accuracy.md           准确性审查结果（事实+引用+术语）
+    01-accuracy-hermes.md    准确性审查 Hermes 结果（可选）
     02-content.md            内容审查结果（深度+逻辑+结构）
     02-content-codex.md      内容审查 Codex 结果（可选）
+    02-content-hermes.md     内容审查 Hermes 结果（可选）
     03-style.md              风格审计结果
+    03-style-hermes.md       风格审计 Hermes 结果（可选）
     04-visual.md             视觉规划结果
     05-review-report.md      综合审查报告
     06-revised-origin.md     首次改写后的文章
@@ -206,7 +224,9 @@ Agent 7 接收 rewrite-round-1/origin.md + rewrite-round-1/05-review-report.md +
   rewrite-round-2/           第2轮验证（最多到此，本版本上限为 2 轮）
     origin.md                本轮输入（= round-1/06-revised-origin.md 的拷贝）
     02-content.md            内容验证
+    02-content-hermes.md     内容验证 Hermes（可选）
     03-style.md              风格验证
+    03-style-hermes.md       风格验证 Hermes（可选）
     05-review-report.md      聚合验证结果
     06-revised-origin.md     本轮改写（如有 🔴）
     06-revision-notes.md     本轮改写说明（如有 🔴）
