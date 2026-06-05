@@ -72,6 +72,9 @@ background: false
 ### E. 英文 AI 直译词（中文技术文常被原样保留或硬译）
 delve、tapestry、leverage、robust、pivotal、seamless、seamlessly、comprehensive、furthermore、moreover、consequently、notably、importantly、underscore、harness、streamline、realm、testament、landscape、multifaceted、crucial、utilize、intricate、cutting-edge、game-changer、synergy
 
+### F. 口播 / 营销腔短语（短视频、自媒体腔，技术文里一律删）
+就歪了、这就歪了、这就稳了、稳了、给你个最直接最直白（的）、最直接最直白、说人话就是、直接拉满、直接起飞、一整个（…住了）、谁懂啊、绝绝子、yyds、不要太香、好家伙、属实是、直接给你整明白、看完这篇你就懂了、记住这一点、划重点、敲黑板、手把手带你、保姆级、一句话总结、说白了就是、说穿了、归根结底就一句话
+
 ### 词典使用细则
 - **真术语豁免**：B/C 中少数词在确切技术语境下是正经术语（如"向量的维度""模型的鲁棒性/robust""端到端训练"），此类保留，但须在表格"问题类型"列标注「术语豁免」并说明依据；其余一律按 AI 味处理。
 - **替换而非删字**：给出能在原句承上启下的自然中文替换，不要简单删词造成语义断裂。
