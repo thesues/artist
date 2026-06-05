@@ -12,7 +12,7 @@
 - `article-content-reviewer` — opus, 技术深度+论证逻辑+章节结构
 - `article-content-reviewer-codex` — haiku+codex, 内容审查的 Codex 多样性视角（可选，需 codex CLI）
 - `article-content-reviewer-hermes` — haiku+hermes, 内容审查的 Hermes 多样性视角（可选，需 hermes CLI）
-- `article-style-auditor` — opus, 去 AI 味核心 Agent，检测模板化表达
+- `article-style-auditor` — opus, 去 AI 味核心 Agent，检测模板化表达；内置确定性 AI 味词典（5 类黑名单），审计前用 Grep 逐条扫全文、命中即 🔴 必改，叠加模型自由判断取并集，确属术语者走「术语豁免」
 - `article-style-auditor-hermes` — haiku+hermes, 风格审计的 Hermes 多样性视角（可选，需 hermes CLI）
 - `article-visual-planner` — sonnet, WebSearch, 规划图示、截取参考图
 

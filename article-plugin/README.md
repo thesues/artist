@@ -1,6 +1,6 @@
 # Article Enhancement Plugin
 
-技术调研文章多维度审查、增强与翻译讲解插件。通过 11 个专业 Agent 协同工作：对中文文章做事实校验、深度分析、去 AI 味、术语规范化与多轮迭代改写；对英文论文/网页做翻译 + 译注 + 图示 + 延伸阅读的中文讲解稿。
+技术调研文章多维度审查、增强与翻译讲解插件。通过 14 个专业 Agent 协同工作：对中文文章做事实校验、深度分析、去 AI 味、术语规范化与多轮迭代改写；对英文论文/网页做翻译 + 译注 + 图示 + 延伸阅读的中文讲解稿。其中 4 个 Agent 是 Codex / Hermes 第三方模型转发器，提供独立交叉视角（可选，CLI 不可用时自动跳过）。
 
 ## 安装
 
@@ -31,6 +31,9 @@ pip install pypdf
 
 # Codex CLI（可选，提供多模型审查视角）
 # 参考 https://github.com/openai/codex 安装
+
+# Hermes Agent（可选，提供第三方模型审查视角）
+# 参考 https://github.com/nousresearch/hermes-agent 安装；安装后用 `hermes model` 选择默认模型
 ```
 
 图示由 `article-visual-planner` 直接输出 SVG 源码，`article-diagram-renderer` 仅负责落盘为 `.svg` 文件，无需额外安装渲染工具链。（可选：安装 `libxml2-utils` 的 `xmllint` 以启用 SVG 格式校验。）
@@ -54,15 +57,18 @@ claude plugins update article@article
 ### /review 与 /enhance（中文文章审查 + 增强）
 
 ```
-第一层：并行分析（最多 5 个 Agent）
+第一层：并行分析（最多 8 个 Agent）
 ├── article-accuracy-checker         opus    事实+引用+术语 + WebSearch
+├── article-accuracy-checker-hermes  haiku   Hermes 多样性视角（可选；不联网，仅训练知识标注怀疑）
 ├── article-content-reviewer         opus    深度+逻辑+结构
 ├── article-content-reviewer-codex   haiku   Codex 多样性视角（可选）
-├── article-style-auditor            opus    去 AI 味核心
+├── article-content-reviewer-hermes  haiku   Hermes 多样性视角（可选）
+├── article-style-auditor            opus    去 AI 味核心（内置确定性 AI 味词典，命中即必改）
+├── article-style-auditor-hermes     haiku   Hermes 多样性视角（可选，同步词典）
 └── article-visual-planner           sonnet  视觉规划 + WebSearch
 
 第二层：聚合
-└── article-review-aggregator        opus    汇总全部报告 + 交叉验证
+└── article-review-aggregator        opus    汇总全部报告 + 三方交叉验证（Claude × Codex × Hermes）
 
 图示落盘
 └── article-diagram-renderer         sonnet  抽取 SVG 代码块并写入 .svg
@@ -73,6 +79,8 @@ claude plugins update article@article
     └── 循环最多 2 轮（第 1 轮初稿，第 2 轮验证 + 必要时再补改一次），N=2 后强制退出
 ```
 
+> **去 AI 味词典**：`article-style-auditor` 内置一份确定性黑名单（套话连接词 / 商业黑话 / AI 高频形容词动词 / 模板化开头结尾 / 英文 AI 直译词），审计前先用 `Grep` 逐条扫全文，命中一律列入 🔴「必须改写」，再叠加模型自由判断（二者取并集）。少数确属术语的（向量维度、模型鲁棒性、端到端训练）走「术语豁免」并标注依据。Hermes 视角的 `grounding_rules` 同步该词典。
+
 ### /explain（英文论文/网页中文讲解）
 
 ```
@@ -82,11 +90,12 @@ claude plugins update article@article
 └── Markdown         直接拷贝
    └── 输出 source/origin.md + img/
 
-第一层：并行分析（4 个 Agent，单条消息同时启动）
-├── article-translator            opus    英→中翻译，术语对照表
-├── article-accuracy-checker      opus    事实+引用+术语校验（复用）
-├── article-related-finder        sonnet  WebSearch+WebFetch 找相关文献并核验链接
-└── article-visual-planner        sonnet  规划 SVG 图示（复用）
+第一层：并行分析（4 个 Agent + 可选 Hermes）
+├── article-translator             opus    英→中翻译，术语对照表
+├── article-accuracy-checker       opus    事实+引用+术语校验（复用）
+├── article-accuracy-checker-hermes haiku  Hermes 准确性视角（可选；与 Claude+WebSearch 交叉）
+├── article-related-finder         sonnet  WebSearch+WebFetch 找相关文献并核验链接
+└── article-visual-planner         sonnet  规划 SVG 图示（复用）
 
 图示落盘
 └── article-diagram-renderer            sonnet  落盘到 .article-work-explain/img/
@@ -148,9 +157,12 @@ claude plugins update article@article
   rewrite-round-1/           第1轮
     origin.md                输入文章
     01-accuracy.md           准确性审查（事实+引用+术语）
+    01-accuracy-hermes.md    准确性审查 Hermes（可选）
     02-content.md            内容审查（深度+逻辑+结构）
     02-content-codex.md      内容审查 Codex（可选）
+    02-content-hermes.md     内容审查 Hermes（可选）
     03-style.md              风格审计
+    03-style-hermes.md       风格审计 Hermes（可选）
     04-visual.md             视觉规划
     05-review-report.md      综合审查报告
     06-revised-origin.md     改写后文章
@@ -171,6 +183,7 @@ claude plugins update article@article
     diagram_N.svg            visual-planner 生成、renderer 落盘
   01-translation.md          中文译稿 + 术语对照表
   02-accuracy.md             事实/引用/术语审查
+  02-accuracy-hermes.md      事实/引用/术语审查 Hermes 视角（可选）
   03-related.md              相关文献清单（WebFetch 核验过链接）
   04-visual.md               视觉规划 + SVG 源码
   05-explanation.md          ★ 最终中文讲解稿
@@ -181,6 +194,7 @@ claude plugins update article@article
 - Claude Code CLI
 - `pypdf` (Python, PDF 处理)
 - `codex` CLI (可选, Codex 多样性视角)
+- `hermes` CLI (可选, Hermes 多样性视角；模型由 `hermes model` 全局配置决定)
 - `xmllint` (可选, SVG 格式校验；通常随 `libxml2-utils` 提供)
 
 ## 参考文章库

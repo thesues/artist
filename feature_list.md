@@ -112,6 +112,28 @@
   - 端到端跑一篇带图论文（建议复用 latent_action 论文做回归），父对话 token 较旧版下降 ≥40%，产出无明显劣化
 - passes: false
 
+## F20: Hermes 多样性视角集成（content + style + accuracy 三 Agent）
+- 目标：在现有 Codex 第二意见之外，增加 Hermes Agent（Nous Research）作为第三方模型视角，提供 Claude × Codex × Hermes 三方交叉验证。复用 codex-task.mjs 的接口模式：haiku 转发器 + 独立 Node 运行时脚本 + 可选可用性 gate
+- 验收：
+  - 新增 `scripts/hermes-task.mjs`：spawn `hermes chat -q PROMPT -Q`，接受 `--cwd / --prompt-file / --output-file`，与 codex-task.mjs flag 兼容（不支持的 flag 静默忽略）
+  - 新增 3 个 Hermes Agent：`article-content-reviewer-hermes`、`article-style-auditor-hermes`、`article-accuracy-checker-hermes`，均为 haiku+Bash 转发器
+  - `commands/{review,enhance}.md` 第一层并行启动表加入 1-hermes / 2-hermes / 3-hermes（共 8 个 Agent），并加入 `which hermes` 可用性检查
+  - `commands/explain.md` 第一层加入 2-hermes（accuracy-checker-hermes）；explainer 输入清单条件加载 `02-accuracy-hermes.md`
+  - `agents/article-review-aggregator.md` 输入列表扩到 8 路（含 3 个可选 Hermes 报告），交叉验证逻辑改为 Claude × Codex × Hermes 三方（≥2 一致 → 高置信；2-of-3 多数 → 采纳；孤立 → 待复核）；分歧小节标题改为 `Agent 间分歧（Claude × Codex × Hermes）`
+  - `CLAUDE.md` / `README.md` 同步：第一层 Agent 数从 5 改为 8，加入 Hermes 集成小节，依赖列表加入 `hermes` CLI（可选），文件清单加入 `*-hermes.md` 与 `.hermes-prompt-*.md`
+  - 端到端：用 latent_action 论文跑一遍 `/explain`，确认 `02-accuracy-hermes.md` 生成且 explainer 把它纳入输入；移除 hermes 后再跑一次，确认整套 Hermes 优雅跳过、其余 Agent 正常完成
+- passes: false
+
+## F21: article-style-auditor 内置确定性 AI 味词典（命中即必改）
+- 目标：原 style-auditor 只有描述性规则、靠模型自由判断，漏检率高、"AI 味仍浓"。增加一份确定性黑名单词典，命中即判定 AI 味、强制列入 🔴 必须改写，把"是否 AI 味"从主观判断变成"先扫词典再补充判断"的并集。词条来源于 web search（ChatGPT/AIGC 高频词、中文套话、商业黑话、Humanizer-zh 24 模式、英文 AI 直译词）
+- 验收：
+  - `agents/article-style-auditor.md` 新增「AI 味词典」小节，分 A 套话连接词 / B 商业黑话 / C AI 高频形容词动词 / D 模板化开头结尾 / E 英文 AI 直译词 五类；并指示 opus 版用 `Grep` 逐条扫描主文件，命中一律 🔴
+  - 含「真术语豁免」细则（如向量的维度、模型的鲁棒性、端到端训练），豁免须在表格标注依据
+  - 审查摘要要求注明「词典命中 N 处」，N 影响 AI 味评分
+  - `agents/article-style-auditor-hermes.md` 的 `grounding_rules` 同步加入「六、AI 味词典」，使 Hermes 第三方视角也强制执行同一份黑名单（Hermes 无 Grep，按 prompt 内联扫描）
+  - 文档同步：CLAUDE.md / README.md 提及词典；claude-progress.txt 记录
+- passes: true
+
 ## F18: PDF 提取图按 figure 合并，避免数百碎片
 - 目标：研究论文 figure 在 PDF 中常被切成几十个 image XObject（如 8x8 demo grid），原脚本逐 XObject 导出会让 `img/` 出现 800 个 fig_N 文件，origin.md 也被切成几十条 `![]()` 引用，下游 agent 无法识别"这是同一张 figure"。改成：用 pdfplumber 拿到每张 image 的页面坐标 → 同页按竖向间距聚类 → 对每个 cluster 的并集 bbox 调用 `page.crop(bbox).to_image(resolution=180)` 渲染为单张 PNG
 - 验收：
