@@ -14,7 +14,7 @@
 - `article-content-reviewer-hermes` — haiku+hermes, 内容审查的 Hermes 多样性视角（可选，需 hermes CLI）
 - `article-style-auditor` — opus, 去 AI 味核心 Agent，检测模板化表达；内置确定性 AI 味词典（5 类黑名单），审计前用 Grep 逐条扫全文、命中即 🔴 必改，叠加模型自由判断取并集，确属术语者走「术语豁免」
 - `article-style-auditor-hermes` — haiku+hermes, 风格审计的 Hermes 多样性视角（可选，需 hermes CLI）
-- `article-visual-planner` — sonnet, WebSearch, 规划图示、截取参考图
+- `article-visual-planner` — sonnet, WebSearch, 规划图示、截取参考图；支持 `claude`（暖米黄牛皮纸调）与 `feishu`（飞书/Lark 明亮产品 UI 调）两套图示风格预设，由命令在启动前 AskUserQuestion 询问用户、以 `风格:` 参数注入，全文图示统一该风格
 
 ### /explain 专用 Agent
 - `article-translator` — opus, WebSearch, 英文 → 中文准确翻译，保留专业术语，输出术语对照表

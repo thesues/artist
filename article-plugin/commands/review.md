@@ -63,6 +63,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 
 - 若 `<origin>` 为 `.md`：创建 `.article-work/rewrite-round-1/` 目录，将原始文件拷贝为 `.article-work/rewrite-round-1/origin.md`
 - 若 `<origin>` 为 `.pdf`：运行 PDF 预处理
+- **询问图示风格（必做）**：用 `AskUserQuestion` 让用户选择图示风格，选项为 `claude`（暖米黄牛皮纸调，默认）与 `feishu`（飞书 / Lark 明亮产品 UI 调）。把 `风格: <claude|feishu>` 作为一行写入 Agent 4 的 prompt，全文图示统一该风格。用户跳过则默认 `claude`。
 
 在**单条消息中**同时启动 Agent 1/1-hermes/2/2-codex/2-hermes/3/3-hermes/4（并行），使用 `mode: "auto"`。
 
@@ -81,7 +82,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/pdf/scripts/prepare_article_pdf.py" "<origi
 | 2-hermes | 路径：`.article-work/rewrite-round-1/origin.md`；输出路径作为 `--output-file` 传入 hermes-task.mjs | `.article-work/rewrite-round-1/02-content-hermes.md` |
 | 3 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read） | `.article-work/rewrite-round-1/03-style.md` |
 | 3-hermes | 路径：`.article-work/rewrite-round-1/origin.md`；输出路径作为 `--output-file` 传入 hermes-task.mjs | `.article-work/rewrite-round-1/03-style-hermes.md` |
-| 4 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read） | `.article-work/rewrite-round-1/04-visual.md` |
+| 4 | 路径：`.article-work/rewrite-round-1/origin.md`；图片目录：`.article-work/img/`（按需 Read）；**`风格: <claude\|feishu>`**（用户选定值） | `.article-work/rewrite-round-1/04-visual.md` |
 
 ---
 

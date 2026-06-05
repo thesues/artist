@@ -38,6 +38,8 @@ pip install pypdf
 
 图示由 `article-visual-planner` 直接输出 SVG 源码，`article-diagram-renderer` 仅负责落盘为 `.svg` 文件，无需额外安装渲染工具链。（可选：安装 `libxml2-utils` 的 `xmllint` 以启用 SVG 格式校验。）
 
+> **图示风格**：visual-planner 内置两套风格预设——`claude`（暖米黄牛皮纸调，虚线分组框，默认）与 `feishu`（飞书/Lark 明亮产品 UI 调，纯白底、彩色节点+同色描边、实线分组框、灰色公式标注）。`/review` `/enhance` `/explain` 在启动图示规划前会用 AskUserQuestion 询问你选哪套，**全文所有图示统一该风格**，不混用。跳过则默认 `claude`。
+
 ### 4. 重启 Claude Code
 
 插件安装或更新后需要重启 Claude Code 才能生效。

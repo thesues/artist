@@ -120,6 +120,8 @@ cp <input.md> .article-work-explain/source/origin.md
 
 输入文件 `source/origin.md`，所有 Agent 共用。
 
+**询问图示风格（启动 Agent 前必做）：** 用 `AskUserQuestion` 让用户选择讲解稿图示风格，选项为 `claude`（暖米黄牛皮纸调，默认）与 `feishu`（飞书 / Lark 明亮产品 UI 调）。用户选定后，全篇图示统一该风格——把 `风格: <claude|feishu>` 作为一行写入 Agent 4 的 prompt。用户跳过则默认 `claude`。
+
 **Hermes 可用性检查（启动 Agent 前执行）：** 依次运行以下两个命令，任一失败则跳过 2-hermes（不影响其余 4 个 Agent）：
 1. `which hermes` — 检查 hermes CLI 是否安装
 2. `node "${CLAUDE_PLUGIN_ROOT}/scripts/hermes-task.mjs" --check` — 冒烟测试，验证 hermes 实际可响应（30s 超时）
@@ -132,7 +134,7 @@ cp <input.md> .article-work-explain/source/origin.md
 | 2 accuracy-checker | 路径：`.article-work-explain/source/origin.md`；图片目录：`.article-work-explain/img/`（按需 Read） | `.article-work-explain/02-accuracy.md` |
 | 2-hermes accuracy-checker-hermes | 路径：`.article-work-explain/source/origin.md`；prompt 临时文件路径 `.article-work-explain/.hermes-prompt-accuracy.md`；输出路径作为 `--output-file` 传入 hermes-task.mjs | `.article-work-explain/02-accuracy-hermes.md` |
 | 3 related-finder | 路径：`.article-work-explain/source/origin.md`；图片目录：`.article-work-explain/img/`（按需 Read） | `.article-work-explain/03-related.md` |
-| 4 visual-planner | 路径：`.article-work-explain/source/origin.md`；图片目录：`.article-work-explain/img/`（按需 Read） | `.article-work-explain/04-visual.md` |
+| 4 visual-planner | 路径：`.article-work-explain/source/origin.md`；图片目录：`.article-work-explain/img/`（按需 Read）；**`风格: <claude\|feishu>`**（用户选定值） | `.article-work-explain/04-visual.md` |
 
 启动 Agent 时仅传入路径，不要把文件内容嵌入 prompt。
 

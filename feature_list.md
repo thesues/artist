@@ -134,6 +134,16 @@
   - 文档同步：CLAUDE.md / README.md 提及词典；claude-progress.txt 记录
 - passes: true
 
+## F22: visual-planner 图示风格预设（claude / feishu，启动前选风格、全文统一）
+- 目标：原 visual-planner 只有一套暖米黄调色板（隐式 claude 风格），不可切换。固化为命名预设 `claude`，并新增 `feishu`（飞书/Lark 风格，参考用户截图：纯白底、彩色节点+同色系描边、实线浅绿分组容器、灰色公式/维度小字标注、更小圆角更细描边）。命令在启动图示规划前询问用户选风格，全文所有图示统一该风格
+- 验收：
+  - `agents/article-visual-planner.md` 新增「图示风格参数（强制统一）」说明 + 「图示风格预设」小节（claude / feishu 两套调色板表格）+ 两套「样本模板」（结构相同、配色不同）；prompt 传入 `风格: claude|feishu`，未传默认 claude，全文图示禁止混用
+  - 原 section 3「颜色」的硬编码调色板改为「取自指定风格预设」
+  - `commands/{review,enhance,explain}.md` 在第一层启动前新增「询问图示风格（AskUserQuestion，claude/feishu，默认 claude）」步骤，并把 `风格: <值>` 注入 Agent 4（visual-planner）的 prompt；enhance 的验证轮如需重绘沿用同一风格、`--resume` 不重复追问
+  - 文档同步：CLAUDE.md / article-plugin/CLAUDE.md / README.md 说明两套风格与「启动前询问、全文统一」机制
+  - diagram-renderer 无需改（只抽取落盘，风格已固化在 SVG 源码里）
+- passes: true
+
 ## F18: PDF 提取图按 figure 合并，避免数百碎片
 - 目标：研究论文 figure 在 PDF 中常被切成几十个 image XObject（如 8x8 demo grid），原脚本逐 XObject 导出会让 `img/` 出现 800 个 fig_N 文件，origin.md 也被切成几十条 `![]()` 引用，下游 agent 无法识别"这是同一张 figure"。改成：用 pdfplumber 拿到每张 image 的页面坐标 → 同页按竖向间距聚类 → 对每个 cluster 的并集 bbox 调用 `page.crop(bbox).to_image(resolution=180)` 渲染为单张 PNG
 - 验收：
