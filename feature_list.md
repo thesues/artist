@@ -144,6 +144,16 @@
   - diagram-renderer 无需改（只抽取落盘，风格已固化在 SVG 源码里）
 - passes: true
 
+## F23: feishu 风格精修（精确 hex + 文字极简 + 防重叠 + 降饱和）并新增 feishu-gray 灰阶风格
+- 目标：F22 的 feishu 初版偏花、文字偏多、有标注重叠，且配色用近似色。本次：① feishu 改为低饱和多色（柔色轻染 + 中性灰容器），强制精确 hex；② 新增「文字极简」与「防重叠」强制规则；③ 新增第三套风格 `feishu-gray`（纯黑白灰、零色相，靠灰阶深浅区分功能）。三套风格全留，命令启动前 3 选 1
+- 验收：
+  - `agents/article-visual-planner.md`：feishu 预设改为低饱和精确 hex（蓝 #EEF3FA/#9DBCE8、绿 #EFF5EF/#A9CDA9、黄 #FBF5E8/#DCC288、紫 #F4EFF8/#BCA6D6、红 #FAF0F0/#D9A9A9、强调 #DCE7F5/#6E9BE6、中性灰容器 #F7F8FA/#E5E6EB、连线 #BFC4CC，描边统一 1.0），含「不得自创近似色」「降饱和克制」要求；新增「文字极简规则」（每节点≤2行、解释回正文、灰字只留公式/维度、列举用 chip、总字数比 claude 少 30-50%）与「防重叠规则」（横向标注加白底垫底、节点内留≥10px、相邻间距≥24px）
+  - 新增预设 C `feishu-gray`：纯黑白灰（默认 #FFFFFF/#D0D5DD、次级 #F2F3F5/#C9CDD4、强调 #E8EAED/#8A9099、容器 #F7F8FA/#E5E6EB），严禁任何色相，分类靠灰阶深浅+序号；共用 feishu 的文字极简+防重叠规则；样本模板新增 feishu-gray 示例、feishu 示例改为降饱和
+  - `commands/{review,enhance,explain}.md`：AskUserQuestion 改为 3 选项（claude/feishu/feishu-gray），prompt 注入 `风格: <claude|feishu|feishu-gray>`
+  - 文档同步：CLAUDE.md / article-plugin/CLAUDE.md / README.md 更新为三套风格
+  - 实测：用 cosmos 文章跑 feishu 与 feishu-gray 各 3 张，配色校验零违规（feishu 全降饱和柔色、feishu-gray 零真彩色），文字量比初版下降，无明显重叠
+- passes: true
+
 ## F18: PDF 提取图按 figure 合并，避免数百碎片
 - 目标：研究论文 figure 在 PDF 中常被切成几十个 image XObject（如 8x8 demo grid），原脚本逐 XObject 导出会让 `img/` 出现 800 个 fig_N 文件，origin.md 也被切成几十条 `![]()` 引用，下游 agent 无法识别"这是同一张 figure"。改成：用 pdfplumber 拿到每张 image 的页面坐标 → 同页按竖向间距聚类 → 对每个 cluster 的并集 bbox 调用 `page.crop(bbox).to_image(resolution=180)` 渲染为单张 PNG
 - 验收：

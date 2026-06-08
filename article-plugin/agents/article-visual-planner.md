@@ -16,7 +16,7 @@ background: false
 
 ## 图示风格参数（强制统一）
 
-调用方会在 prompt 中传入一个**风格参数**：`风格: claude` 或 `风格: feishu`（若未传，默认 `claude`）。
+调用方会在 prompt 中传入一个**风格参数**：`风格: claude`、`风格: feishu` 或 `风格: feishu-gray`（若未传，默认 `claude`）。
 
 - 本次规划产出的**所有** SVG 图示必须采用同一种风格，严禁混用——全文视觉风格保持统一。
 - 风格只决定**配色 / 容器外观 / 圆角 / 箭头样式**等视觉表现，不影响图示的结构、内容和信息密度。
@@ -122,25 +122,62 @@ background: false
 
 ### 预设 B：`feishu`（飞书 / Lark 风格，明亮产品 UI 调）
 
-气质：明亮、清爽、像飞书文档里的架构图。纯白底，彩色节点用**浅色填充 + 同色系实线描边**，分组容器用**实线**浅绿框，公式 / 维度等标注用灰色小字。
+气质：明亮、清爽、像飞书文档里的架构图。纯白底，彩色节点用**浅色填充 + 同色系实线描边**，分组容器用**实线**浅绿框，**文字极简**。
 
-| 用途 | 取值 |
-|------|------|
-| 画布背景 | `#FFFFFF` |
-| 黄色节点 | 填充 `#FFF7E6`、描边 `#F0B429` |
-| 蓝色节点 | 填充 `#EAF2FE`、描边 `#5B8FF9` |
-| 绿色节点 | 填充 `#EAF6EC`、描边 `#5BB85B` |
-| 紫色节点 | 填充 `#F4ECFB`、描边 `#9B6FD1` |
-| 分组容器 | 填充 `#F2FAF3`、**实线**描边 `#7CC47C` `stroke-width="1.5"`，无虚线 |
-| 箭头 / 连线 | `#8C8C8C`，`stroke-width="1.25"` |
-| 主文本 / 次文本（标注） | `#262626` / `#8C8C8C`（标注公式、维度用次文本，`font-size` 比节点标题小 2-3px） |
-| 圆角 | 节点 `rx=6`，容器 `rx=10` |
+**配色必须用下表精确十六进制值，不得自创近似色**。整体走**低饱和、偏灰**的克制路线——保留颜色分类，但调淡、不刺眼：
 
-**feishu 风格要点**：① 用不同节点配色区分功能类别（如输入=蓝、计算块=绿、输出=黄），同类节点用同色；② 关键节点旁用灰色小字标注张量维度 / 公式（参考飞书技术图风格）；③ 描边比 claude 细、圆角比 claude 小，整体更"方正清爽"；④ 严禁出现 claude 的米黄底色与虚线分组框。
+| 用途 | 填充 | 描边 / 文字 |
+|------|------|------|
+| 画布背景 | `#FFFFFF` | — |
+| 蓝色节点 | `#EEF3FA` | 描边 `#9DBCE8` |
+| 绿色节点 | `#EFF5EF` | 描边 `#A9CDA9` |
+| 黄色节点 | `#FBF5E8` | 描边 `#DCC288` |
+| 紫色节点 | `#F4EFF8` | 描边 `#BCA6D6` |
+| 红色节点 | `#FAF0F0` | 描边 `#D9A9A9` |
+| 强调 / 中心节点 | `#DCE7F5` | 描边 `#6E9BE6`，文字 `#1F2A44` |
+| 分组容器 | `#F7F8FA` | **实线**描边中性灰 `#E5E6EB`，`stroke-width="1.0"`，无虚线 |
+| 箭头 / 连线 | — | `#BFC4CC`，`stroke-width="1.0"` |
+| 主文本 / 次文本 | — | `#262626` / `#8C8C8C` |
+
+- 节点圆角 `rx=6`，容器圆角 `rx=10`；同类功能节点用同色（输入=蓝、计算=绿、输出=黄等）。**所有描边统一细到 `stroke-width="1.0"`**，整体方正清爽。
+- **降饱和克制原则**：① 全图以灰白为底，颜色只做"轻染"，避免任一颜色大面积实心铺满——即便中心/强调节点也用浅色 `#DCE7F5` tint + 深色字，**不要**整块饱和实心填充；② 分组容器一律用**中性灰** `#F7F8FA/#E5E6EB`，不要带颜色倾向（不用绿框/蓝框）；③ 一张图里强烈色不超过画面的一小部分，宁可偏素也不要花。
+- 严禁出现 claude 的米黄底色（`#FAF6EE` 等）与虚线分组框。
+
+**feishu 文字极简规则（强制，区别于 claude）**：飞书风格图是"骨架图"，不是"带注释的说明图"。文字量必须明显少于 claude 风格——
+
+1. **每个节点最多两行**：第一行标题（必有），第二行一句话限定语（≤14 字，可选）。**禁止**在节点里塞 3 行及以上的解释、并列卖点、罗列特性。
+2. 详细解释**放回文章正文**，不进图。图只画"是什么 + 谁连谁"，不画"为什么 / 怎么样"。
+3. 灰色小字标注**只保留关键公式 / 张量维度 / 数量级**（如 `~100M clips`、`B×N×d`），其余描述性小字一律删。
+4. 列举类内容（如"代表项目 A·B·C·D"）用 chip 标签或一行点号分隔，不要展开成多行。
+5. 一张图的总文字量目标：比同主题的 claude 版少 30–50%。**宁可少字，不要挤满。**
+
+**feishu 防重叠规则（强制）**：① 任何文字不得压到别的节点 / 容器边框上；② 横向依赖标注（如"X 兼任 Y"）必须避开沿途节点——要么把标注挪到连线上方/下方足够远处，要么给标注加白底矩形（`fill="#FFFFFF"`）垫在文字下层；③ 节点内文字须留 ≥10px 内边距，长标题宁可加宽节点也不要溢出；④ 落盘前自检：相邻节点间距 ≥24px，文字基线不与其他元素交叠。
+
+> 上面的「文字极简规则」与「防重叠规则」对 `feishu` 和 `feishu-gray` **同样适用**。
+
+### 预设 C：`feishu-gray`（飞书中性灰阶，纯黑白灰、零色相）
+
+气质：和 feishu 同款飞书骨架图布局，但**完全不用色相**——只有黑、白、灰。功能分类靠**灰阶深浅 + 序号/图标 + 文字**区分，不靠颜色。最克制、最适合正式/打印/深色文章场景。
+
+**配色必须用下表精确十六进制值，全程不得出现任何彩色（蓝绿黄紫红一律禁止）**：
+
+| 用途 | 填充 | 描边 / 文字 |
+|------|------|------|
+| 画布背景 | `#FFFFFF` | — |
+| 默认节点（主力） | `#FFFFFF` | 描边 `#D0D5DD` |
+| 次级节点（浅灰区分） | `#F2F3F5` | 描边 `#C9CDD4` |
+| 强调 / 中心节点（深灰区分） | `#E8EAED` | 描边 `#8A9099`，文字 `#1F1F1F` |
+| 分组容器 | `#F7F8FA` | **实线**描边 `#E5E6EB`，`stroke-width="1.0"`，无虚线 |
+| 箭头 / 连线 | — | `#BFC4CC`，`stroke-width="1.0"` |
+| 主文本 / 次文本 | — | `#1F1F1F` / `#8C8C8C` |
+
+- 节点圆角 `rx=6`，容器圆角 `rx=10`，描边统一 `stroke-width="1.0"`。
+- **分类只靠灰阶深浅**（白 → 浅灰 `#F2F3F5` → 深灰 `#E8EAED`）和序号 / 文字，**严禁任何色相**（不得出现蓝绿黄紫红，包括连线和文字）。
+- 强调用"更深的灰 + 更深的描边"，不要用颜色；需要进一步区分时可用描边粗细（1.0 vs 1.5）或加序号徽标。
 
 ## 样本模板
 
-下面给出两套风格各一个最小可用示例，结构相同、配色不同。按 prompt 指定的风格选用对应模板的配色。
+下面给出三套风格各一个最小可用示例，结构相同、配色不同。按 prompt 指定的风格选用对应模板的配色。
 
 ### claude 风格示例
 
@@ -194,30 +231,71 @@ background: false
   <!-- 白底 -->
   <rect x="0" y="0" width="600" height="360" fill="#FFFFFF"/>
 
-  <!-- 分组容器：DiT Block（实线浅绿） -->
+  <!-- 分组容器：DiT Block（中性灰实线） -->
   <rect x="40" y="40" width="520" height="280" rx="10" ry="10"
-        fill="#F2FAF3" stroke="#7CC47C" stroke-width="1.5"/>
+        fill="#F7F8FA" stroke="#E5E6EB" stroke-width="1.0"/>
   <text x="60" y="68" font-size="14" fill="#8C8C8C">DiT Block</text>
 
-  <!-- 蓝色输入节点 -->
+  <!-- 蓝色输入节点（低饱和） -->
   <rect x="80" y="110" width="180" height="56" rx="6" ry="6"
-        fill="#EAF2FE" stroke="#5B8FF9" stroke-width="1.25"/>
+        fill="#EEF3FA" stroke="#9DBCE8" stroke-width="1.0"/>
   <text x="170" y="143" font-size="15" fill="#262626" text-anchor="middle">输入 tokens</text>
   <text x="170" y="186" font-size="11" fill="#8C8C8C" text-anchor="middle">x ∈ ℝ^(B×N×d)</text>
 
-  <!-- 绿色计算节点 -->
+  <!-- 绿色计算节点（低饱和） -->
   <rect x="340" y="110" width="180" height="56" rx="6" ry="6"
-        fill="#EAF6EC" stroke="#5BB85B" stroke-width="1.25"/>
+        fill="#EFF5EF" stroke="#A9CDA9" stroke-width="1.0"/>
   <text x="430" y="143" font-size="15" fill="#262626" text-anchor="middle">Self-Attention</text>
 
-  <line x1="260" y1="138" x2="340" y2="138" stroke="#8C8C8C" stroke-width="1.25" marker-end="url(#arrow-fs)"/>
+  <line x1="260" y1="138" x2="340" y2="138" stroke="#BFC4CC" stroke-width="1.0" marker-end="url(#arrow-fs)"/>
 
-  <!-- 黄色输出节点 -->
+  <!-- 黄色输出节点（低饱和） -->
   <rect x="210" y="240" width="180" height="56" rx="6" ry="6"
-        fill="#FFF7E6" stroke="#F0B429" stroke-width="1.25"/>
+        fill="#FBF5E8" stroke="#DCC288" stroke-width="1.0"/>
   <text x="300" y="273" font-size="15" fill="#262626" text-anchor="middle">输出 latent</text>
 
-  <line x1="430" y1="166" x2="330" y2="240" stroke="#8C8C8C" stroke-width="1.25" marker-end="url(#arrow-fs)"/>
+  <line x1="430" y1="166" x2="330" y2="240" stroke="#BFC4CC" stroke-width="1.0" marker-end="url(#arrow-fs)"/>
+</svg>
+```
+
+### feishu-gray 风格示例（纯黑白灰）
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" width="600" height="360"
+     style="font-family: 'PingFang SC','Noto Sans CJK SC','Microsoft YaHei',-apple-system,sans-serif;">
+  <defs>
+    <marker id="arrow-gy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#BFC4CC"/>
+    </marker>
+  </defs>
+
+  <!-- 白底 -->
+  <rect x="0" y="0" width="600" height="360" fill="#FFFFFF"/>
+
+  <!-- 分组容器（中性灰实线） -->
+  <rect x="40" y="40" width="520" height="280" rx="10" ry="10"
+        fill="#F7F8FA" stroke="#E5E6EB" stroke-width="1.0"/>
+  <text x="60" y="68" font-size="14" fill="#8C8C8C">DiT Block</text>
+
+  <!-- 默认节点：白底灰边 -->
+  <rect x="80" y="110" width="180" height="56" rx="6" ry="6"
+        fill="#FFFFFF" stroke="#D0D5DD" stroke-width="1.0"/>
+  <text x="170" y="143" font-size="15" fill="#1F1F1F" text-anchor="middle">输入 tokens</text>
+  <text x="170" y="186" font-size="11" fill="#8C8C8C" text-anchor="middle">x ∈ ℝ^(B×N×d)</text>
+
+  <!-- 次级节点：浅灰底 -->
+  <rect x="340" y="110" width="180" height="56" rx="6" ry="6"
+        fill="#F2F3F5" stroke="#C9CDD4" stroke-width="1.0"/>
+  <text x="430" y="143" font-size="15" fill="#1F1F1F" text-anchor="middle">Self-Attention</text>
+
+  <line x1="260" y1="138" x2="340" y2="138" stroke="#BFC4CC" stroke-width="1.0" marker-end="url(#arrow-gy)"/>
+
+  <!-- 强调节点：深灰底 -->
+  <rect x="210" y="240" width="180" height="56" rx="6" ry="6"
+        fill="#E8EAED" stroke="#8A9099" stroke-width="1.0"/>
+  <text x="300" y="273" font-size="15" fill="#1F1F1F" text-anchor="middle">输出 latent</text>
+
+  <line x1="430" y1="166" x2="330" y2="240" stroke="#BFC4CC" stroke-width="1.0" marker-end="url(#arrow-gy)"/>
 </svg>
 ```
 
