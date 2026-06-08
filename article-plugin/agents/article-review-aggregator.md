@@ -12,12 +12,15 @@ background: false
 
 ## 输入
 
-以下报告由调用方通过 prompt 指定路径：
+以下报告由调用方通过 prompt 指定路径（标注"如存在"的为可选输入；缺失时跳过对应交叉验证逻辑，不视为错误）：
 
-- 准确性审查报告（`article-accuracy-checker` 输出：事实+引用+术语）
+- 准确性审查报告（`article-accuracy-checker` 输出：事实+引用+术语 + WebSearch）
+- 准确性审查 Hermes 报告（`article-accuracy-checker-hermes` 输出，如存在；**不联网**，仅训练知识标注怀疑）
 - 内容审查报告（`article-content-reviewer` 输出：深度+逻辑+结构）
 - 内容审查 Codex 报告（`article-content-reviewer-codex` 输出，如存在）
+- 内容审查 Hermes 报告（`article-content-reviewer-hermes` 输出，如存在）
 - 风格审计报告（`article-style-auditor` 输出）
+- 风格审计 Hermes 报告（`article-style-auditor-hermes` 输出，如存在）
 - 视觉规划报告（`article-visual-planner` 输出）
 
 ## 聚合规则
@@ -27,12 +30,17 @@ background: false
 - 合并重复项，保留最详细的描述
 - 标注问题被多个 Agent 独立发现的情况（增强可信度）
 
-### 2. 交叉验证（含 Codex 视角）
-- 如果 Codex 视角与 Claude 视角一致，增强该发现的置信度
-- 如果存在矛盾判断，保留两方意见并标注分歧
-- 深度不足的段落是否同时有逻辑问题？
-- 逻辑跳跃是否因为缺少深度说明导致？
-- 识别根因问题（一个根因可能导致多个表象问题）
+### 2. 交叉验证（Claude × Codex × Hermes 三方）
+
+每个维度（内容审查 / 风格审计 / 准确性审查）最多有三份独立报告：Claude（默认）、Codex（可选）、Hermes（可选）。聚合规则：
+
+- **三方一致**：若 ≥2 份报告独立指出同一问题（且未被其他报告反驳），置信度高，按更严格的严重级别合并采纳
+- **2-of-3 多数**：两份一致、一份不同 → 采纳多数意见，并在"Agent 间分歧"小节列出少数意见与可能成因
+- **孤立观点**：仅一方提出 → 保留为🟡 待复核，不直接升级为🔴；除非提出方是 Claude+WebSearch 验证过的事实陈述，则可视为🔴
+- **特别说明（Hermes 准确性视角）**：Hermes 不联网。其🔴只在与 Claude+WebSearch 一致或自身依据明确时才升级为最终🔴；否则降级为🟡，标注"建议人工/Claude 联网核实"
+- **跨维度根因关联**：深度不足 ↔ 逻辑跳跃 ↔ 引用缺失 经常同源，识别根因后合并表述
+
+如果某可选报告缺失，按现有报告做对应规模的（一方/两方）交叉验证即可。
 
 ### 3. 统一严重程度
 - 🔴 **必须修改**：事实错误、严重逻辑问题、关键引用缺失
@@ -75,8 +83,8 @@ background: false
 ### 交叉验证发现
 [多 Agent 共同发现的问题，置信度更高]
 
-### Agent 间分歧（Codex vs Claude）
-[如有矛盾判断，列出两方意见]
+### Agent 间分歧（Claude × Codex × Hermes）
+[如有矛盾判断，按"维度 / 问题位置 / 各方意见 / 倾向采纳 + 理由"列表呈现；缺席方略过]
 
 ### 🔴 必须修改（按优先级排序）
 
