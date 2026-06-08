@@ -122,7 +122,7 @@
   - `agents/article-review-aggregator.md` 输入列表扩到 8 路（含 3 个可选 Hermes 报告），交叉验证逻辑改为 Claude × Codex × Hermes 三方（≥2 一致 → 高置信；2-of-3 多数 → 采纳；孤立 → 待复核）；分歧小节标题改为 `Agent 间分歧（Claude × Codex × Hermes）`
   - `CLAUDE.md` / `README.md` 同步：第一层 Agent 数从 5 改为 8，加入 Hermes 集成小节，依赖列表加入 `hermes` CLI（可选），文件清单加入 `*-hermes.md` 与 `.hermes-prompt-*.md`
   - 端到端：用 latent_action 论文跑一遍 `/explain`，确认 `02-accuracy-hermes.md` 生成且 explainer 把它纳入输入；移除 hermes 后再跑一次，确认整套 Hermes 优雅跳过、其余 Agent 正常完成
-- passes: false
+- passes: true
 
 ## F21: article-style-auditor 内置确定性 AI 味词典（命中即必改）
 - 目标：原 style-auditor 只有描述性规则、靠模型自由判断，漏检率高、"AI 味仍浓"。增加一份确定性黑名单词典，命中即判定 AI 味、强制列入 🔴 必须改写，把"是否 AI 味"从主观判断变成"先扫词典再补充判断"的并集。词条来源于 web search（ChatGPT/AIGC 高频词、中文套话、商业黑话、Humanizer-zh 24 模式、英文 AI 直译词）

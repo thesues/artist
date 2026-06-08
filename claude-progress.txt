@@ -1,6 +1,10 @@
 Date: 2026-06-08
 TaskStatus: completed
-Task scope: F23 — feishu 风格精修（精确 hex + 文字极简 + 防重叠 + 降饱和）并新增 feishu-gray 灰阶风格；三套风格全留、命令启动前 3 选 1
-Current summary: 在 F22（claude/feishu 两套风格 + 启动前选风格）基础上精修：(1) feishu 预设从初版的高饱和多色改为「低饱和多色」——柔色轻染（蓝 #EEF3FA/#9DBCE8、绿 #EFF5EF/#A9CDA9、黄 #FBF5E8/#DCC288、紫 #F4EFF8/#BCA6D6、红 #FAF0F0/#D9A9A9、强调/中心 #DCE7F5/#6E9BE6）+ 中性灰分组容器 #F7F8FA/#E5E6EB（不再用绿框）+ 连线 #BFC4CC + 描边统一 1.0，强制精确 hex「不得自创近似色」、加「降饱和克制原则」（灰白为底、不大面积饱和实心、容器中性灰）。(2) 新增「文字极简规则」（每节点≤2行、解释回正文、灰字只留公式/维度/数量级、列举用 chip、总字数比 claude 少 30-50%）与「防重叠规则」（横向依赖标注加白底矩形垫底或挪远、节点内≥10px 内边距、相邻间距≥24px、落盘前自检）。(3) 新增第三套风格预设 C `feishu-gray`：纯黑白灰、零色相（默认节点 #FFFFFF/#D0D5DD、次级 #F2F3F5/#C9CDD4、强调 #E8EAED/#8A9099、容器 #F7F8FA/#E5E6EB、连线 #BFC4CC、文字 #1F1F1F/#8C8C8C），功能分类只靠灰阶深浅+序号+文字，共用 feishu 的文字极简+防重叠规则。(4) 样本模板：feishu 示例改为降饱和、新增 feishu-gray 示例（共三套示例）。(5) commands/{review,enhance,explain}.md AskUserQuestion 改 3 选项、prompt 注入 `风格: <claude|feishu|feishu-gray>`。(6) 文档 CLAUDE.md ×2 + README 同步三套风格。用 cosmos_physical_ai_v0.md 实测 feishu 与 feishu-gray 各 3 张图：配色校验零违规（feishu 全部降饱和柔色、feishu-gray 仅灰阶无真彩色），文字量较初版下降，用 headless Chrome 渲染目测无明显重叠、达到「素」的效果。
-Main gaps: 规则是 prompt 自然语言约束、非硬校验，偶发可能仍超（实测本轮 OK）；feishu 图1 的横向依赖标注仍略压 transfer2.5 节点（feishu-gray 版用白底垫开更干净）——后续可在规范再紧一条或给 diagram-renderer 加 grep 硬校验，本次未做。F20（Hermes）仍 passes:false，独立未处理。
-Next steps: 如需更稳可加 renderer 落盘硬校验（检测违规色/重叠报警）；按真实使用反馈微调三套配色。
+Task scope: F20 收尾验证 —— Hermes 三方集成端到端回归通过，feature_list F20 改 passes:true
+Current summary: F20 的代码侧此前已全部提交（hermes-task.mjs + 3 个 hermes agent + aggregator 三方逻辑），本次补完三步验证：
+  (1) 冒烟：`node article-plugin/scripts/hermes-task.mjs --check` exit 0（hermes Agent v0.12.0 在线响应；codex 也在）。
+  (2) 端到端：用短测试稿（埋入 AI 套话 + 可疑数据 300%/INT4 + 需核实事实 GPT-3 1750亿）跑 3 个 hermes agent，各产出非空报告（01/02/03-hermes.md），证明 hermes-task.mjs 转发链路对 content/style/accuracy 三种 agent 均工作；再补跑 Claude 端 content/style（accuracy 两次都因 WebSearch 工具链 socket 断而缺席——反而成了好测试），连同 hermes 报告喂给 review-aggregator。aggregator 正确执行了刚提交的三方逻辑：① accuracy 仅 Hermes 单方 → 🔴 降级为 🟡「建议联网核实」；② content/style 的 Claude×Hermes 取较高严重级别合并；③ 输出含「Agent 间分歧（Claude × Codex × Hermes）」表格（维度/位置/各方意见/倾向采纳）；④「提速 300%」被 5 份报告共振，列为最高置信度交叉验证发现；⑤ 缺席的 Claude-accuracy 与全部 Codex 按规则略过、不报错。grep 校验报告含三方分歧小节标题 + 降级标注 + 交叉验证发现，全部 ✓。
+  (3) 优雅跳过：PATH 去掉 hermes 后 `which hermes` 失败 → gate 第一步即跳过整套 Hermes；`hermes-task.mjs --check` 在 hermes 缺失时干净 exit 1（spawn ENOENT），不挂死、不阻塞主流程。
+  三步全过，feature_list F20 已改 passes:true。
+Main gaps: Claude accuracy-checker（opus + WebSearch）本次两次调用都触发 "socket connection closed" infra 错误而未产报告——疑似 WebSearch 工具链临时问题，与 F20 无关；aggregator 已按缺席优雅处理，不影响 F20 结论，但该 agent 的稳定性可后续关注。F19（父协调层路径化 token 回归）仍 passes:false，是独立任务、未在本次处理。
+Next steps: 无 F20 遗留。可选：若 accuracy-checker socket 问题复现，单独排查 WebSearch 链路；按需收口 F19。
